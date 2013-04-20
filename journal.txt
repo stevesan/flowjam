@@ -1,0 +1,11 @@
+TASK LIST:
+
+- need to read/think about about syllables vs. phonemes..
+
+DONE TASKS:
+
+- settled on CMU database. Moby database is missing plurals ("hands"), has bunch of pointless phrases (like "bad actor"..wtf?), and has weird phoneme format
+- partial score for close-consonants, like S vs. Z, T vs. D
+- Difference pronunciations for same spelling, ie. “I’m so close” vs. “Close the door”
+	CMU lists variants, with close(2) etc. Just check all of them
+
