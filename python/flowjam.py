@@ -1,65 +1,21 @@
 
-CMU_VOWEL_PHONEMES = set(
-        [
-        'AA',
-        'AE',
-        'AH',
-        'AO',
-        'AW',
-        'AY',
-        'EH',
-        'ER',
-        'EY',
-        'IH',
-        'IY',
-        'OW',
-        'OY',
-        'UH',
-        'UW'])
+VOWEL_PHONEMES = set([
+        'AA', 'AE', 'AH', 'AO', 'AW', 'AY',
+        'EH', 'ER', 'EY',
+        'IH', 'IY',
+        'OW', 'OY',
+        'UH', 'UW'])
 
-CMU_CONSONANT_PHONEMES = set([
-        'B',
-        'CH',
-        'D',
-        'DH',
-        'F',
-        'G',
-        'HH',
-        'JH',
-        'K',
-        'L',
-        'M',
-        'N',
-        'NG',
-        'P',
-        'R',
-        'S',
-        'SH',
-        'T',
-        'TH',
-        'V',
-        'W',
-        'Y',
-        'Z',
-        'ZH'])
+# Not really used - just the complement of the vowels.
+CONSONANT_PHONEMES = set([
+        'B', 'CH', 'D', 'DH',
+        'F', 'G', 'HH', 'JH', 'K',
+        'L', 'M', 'N', 'NG',
+        'P', 'R', 'S', 'SH', 'T', 'TH',
+        'V', 'W', 'Y', 'Z', 'ZH'])
 
-CMU_VOWEL_CHANGERS = set([ 'L', 'M', 'N', 'NG', 'R' ])
-
-def readMobyPron(path):
-    with open(path) as f:
-        l = f.readline()
-        # for some reason the moby database delineates with just carriage-returns..
-        entries = l.split('\r')
-        # now split individual word entries
-        print "Got %d word entries" % len(entries)
-        out = dict()
-        for entry in entries:
-            if entry == '': continue
-            parts = entry.split(' ')
-            word = parts[0]
-            phos = parts[1]
-            out[word] = phos
-    return out
+SYLLABIC_CONSONANTS = set([
+        'L', 'M', 'N', 'NG', 'R' ])
 
 def readCMUDB(path):
     """ http://www.speech.cs.cmu.edu/cgi-bin/cmudict?in=dance """
@@ -109,40 +65,44 @@ def scoreEntries_PhoMatch(aPhos, bPhos):
     scoreRules.reverse()
     return (score, scoreRules)
 
-#----------------------------------------
-#  scoring algorithm using syllables
-#----------------------------------------
 def phos2syls(phos):
-    """ Essentially acts as a lexer from phonemes to syllables """
-    sylVowels = []
-    sylConsonants = []
+    """ Essentially acts as a lexer from phonemes to syllables. Currently ignores the onset, since the 'rhyme' only consists of nucleus and coda.
+        https://en.wikipedia.org/wiki/Syllable """
+    sylNuclei = []
+    sylCodas = []
     state = 'consonant'
 
     for pho in phos:
         if state == 'vowel':
-            assert( not pho in CMU_VOWEL_PHONEMES )
-            if pho in CMU_VOWEL_CHANGERS:
-                sylVowels[-1] = sylVowels[-1] + "_" + pho
-                state = 'vowelmod'
+            assert( not pho in VOWEL_PHONEMES )
+            if pho in SYLLABIC_CONSONANTS:
+                sylNuclei[-1] = sylNuclei[-1] + "_" + pho
+                state = 'sylconsonant'
             else:
-                sylConsonants.append(pho)
+                sylCodas.append(pho)
                 state = 'consonant'
         elif state == 'consonant':
-            if pho in CMU_VOWEL_PHONEMES:
-                sylVowels.append(pho)
+            if pho in VOWEL_PHONEMES:
+                sylNuclei.append(pho)
                 state = 'vowel'
-        elif state == 'vowelmod':
-            if pho in CMU_VOWEL_PHONEMES:
-                sylVowels.append(pho)
-                sylConsonants.append('') # such as, tenant
+            elif len(sylCodas) > 0:
+                # add more coda consonants, like for 'clasped'
+                sylCodas[-1] = sylCodas[-1] + "_" + pho
+        elif state == 'sylconsonant':
+            if pho in VOWEL_PHONEMES:
+                sylNuclei.append(pho)
+                sylCodas.append('') # such as, tenant
                 state = 'vowel'
             else:
-                # do not worry about vowelmods here - two vowelmods in a row, just count the next as a consonant
-                sylConsonants.append(pho)
+                assert( not pho in SYLLABIC_CONSONANTS )
+                sylCodas.append(pho)
                 state = 'consonant'
+    # just to keep the lengths the same, for open syllables
     if state != 'consonant':
-        sylConsonants.append('')
-    return (sylVowels, sylConsonants)
+        sylCodas.append('')
+
+    assert( len(sylNuclei) == len(sylCodas) )
+    return (sylNuclei, sylCodas)
 
 def matchReverse(a,b):
     """ Does not count empty entries """
@@ -156,24 +116,25 @@ def matchReverse(a,b):
     matches.reverse()
     return (count, matches)
 
+
 def scoreEntries_SylMatch(aPhos, bPhos):
-    (aVowels, aConss) = phos2syls(aPhos)
-    (bVowels, bConss) = phos2syls(bPhos)
-    assert( len(aVowels) == len(aConss) )
-    assert( len(bVowels) == len(bConss) )
+    (aNukes, aCodas) = phos2syls(aPhos)
+    (bNukes, bCodas) = phos2syls(bPhos)
+    assert( len(aNukes) == len(aCodas) )
+    assert( len(bNukes) == len(bCodas) )
 
     score = 0
     vMatches = []
     cMatches = []
-    n = min(len(aVowels), len(bVowels))
+    n = min(len(aNukes), len(bNukes))
     for i in range(1,n+1):
-        av = aVowels[-i]
-        ac = aConss[-i]
-        bv = bVowels[-i]
-        bc = bConss[-i]
+        av = aNukes[-i]
+        ac = aCodas[-i]
+        bv = bNukes[-i]
+        bc = bCodas[-i]
         if av == bv:
-            if len(av) > 2:
-                # modified vowel match
+            # slight hack here - if the syl-con is an M, give 0.5 to kind of count it as a matching coda..
+            if len(av) > 2 and av[-1] == 'M':
                 score = score+1.5
             else:
                 score = score+1
@@ -237,7 +198,7 @@ def test():
 
     # test cases
     testScoreEntries(db , 'book'    , 'look'     , 1.5)
-    testScoreEntries(db , 'fashion' , 'ration'   , 3.0)
+    testScoreEntries(db , 'fashion' , 'ration'   , 2.5)
     testScoreEntries(db , 'state'   , 'invade'   , 1.0)
     testScoreEntries(db , 'invade'  , 'blade'    , 1.5)
     testScoreEntries(db , 'then'    , 'them'     , 0.0)
@@ -253,22 +214,24 @@ def test():
 
     testScoreEntries(db, 'out', 'doubt', 1.5)
 
-    testScoreWords(db, 'proceeding', 'leading', 3.0)
+    testScoreWords(db, 'proceeding', 'leading', 2.5)
 
     testScoreWords(db, 'dry', 'why', 1.0)
     testScoreWords(db, 'try', 'why', 1.0)
-    testScoreWords(db, 'throttle', 'bottle', 3.0)
+    testScoreWords(db, 'throttle', 'bottle', 2.5)
     testScoreWords(db, 'rhyme', 'sublime', 1.5)
-    testScoreWords(db, 'bending', 'ending', 3.5)
-    testScoreWords(db, 'venting', 'ending', 3.0)
+    testScoreWords(db, 'climb', 'sublime', 1.5)
+    testScoreWords(db, 'bending', 'ending', 2.5)
+    testScoreWords(db, 'venting', 'ending', 2.0)
     testScoreWords(db, 'cacophony', 'monopoly', 2.0)
-    testScoreWords(db, 'broccoli', 'monopoly', 3.5)
+    testScoreWords(db, 'broccoli', 'monopoly', 3.0)
 
-    testScoreEntries(db, 'bastion', 'ration', 2.5)
-    testScoreEntries(db, 'motion', 'ration', 1.5)
+    testScoreEntries(db, 'bastion', 'ration', 2.0)
+    testScoreEntries(db, 'motion', 'ration', 1.0)
     testScoreEntries(db, 'bottle', 'ration', 0.0)
 
-    testScoreWords(db, 'green', 'fiend', 1.5)
+    testScoreWords(db, 'green', 'fiend', 1.0)
+    testScoreWords(db, 'friend', 'end', 1.5)
     testScoreWords(db, 'one', 'thumb', 0.0)
 
 # testScoreWords(db, 'love', 'move', 0.0) # TODO make sure the consonant doesn't get counted again here..
@@ -279,7 +242,22 @@ def test():
     testScoreWords(db, 'hollow', 'bottle', 0.0) # later on, maybe allow these really-forced rhymes, but that takes more work
 
     testScoreEntries(db , 'rose'    , 'close(2)' , 1.5)
-    testScoreEntries(db , 'monk'    , 'flunk' , 2.0)
+    testScoreEntries(db , 'monk'    , 'flunk' , 1.5)
+    testScoreEntries(db , 'mend'    , 'bend' , 1.5)
+    testScoreEntries(db , 'med'    , 'bed' , 1.5)
+    testScoreEntries(db , 'met'    , 'bed' , 1.0)
+    testScoreEntries(db , 'well'    , 'hell' , 1.0)
+    testScoreEntries(db , 'tank'    , 'bang' , 1.0)
+
+    testScoreEntries(db , 'skull'    , 'skulk' , 1.0)
+    testScoreEntries(db , 'bulk'    , 'skulk' , 1.5)
+    testScoreEntries(db , 'fang'    , 'bank' , 1.0)
+    testScoreEntries(db , 'rank'    , 'bank' , 1.5)
+    testScoreEntries(db , 'scrunch'    , 'lunch' , 1.5)
+
+    # check multi-consonant codas
+    testScoreEntries(db , 'clasp'    , 'clasped' , 1.0)
+    testScoreEntries(db , 'clasp'    , 'rasp' , 1.5)
 
 def testLoop(db):
     prompt = 'Enter a word, or nothing to exit: '

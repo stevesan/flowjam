@@ -1,5 +1,37 @@
 TASK LIST:
 
+- player feedback:
+    0.0 = FAIL
+    1.0 = OK
+    1.5 = Good
+    2.0 = Good
+    2.5 = Great
+    3.0 = Great
+    3.5+ = EXCELLENT!
+
+- prevent lame rhymes and just repeating the word
+
+- allow multiple words? I scream/ice cream, and sort of for "eyes cream"
+    this would work for that case!
+
+LOW PRIORITY:
+
+- "lame rhymes"
+    this paragraph on wikipedia:
+    "As stated above, in a perfect rhyme the last stressed vowel and all following sounds are identical in both words. If the sound preceding the stressed vowel is also identical, the rhyme is sometimes considered to be inferior and not a perfect rhyme after all.[2][3] An example of such a "super-rhyme" or "more than perfect rhyme" is the "identical rhyme", in which not only the vowels but also the onsets of the rhyming syllables are identical, as in gun and begun. Punning rhymes such are "bare" and "bear" are also identical rhymes. The rhyme may of course extend even farther back than the last stressed vowel. If it extends all the way to the beginning of the line, so that there are two lines that sound identical, then it is called a "holorhyme" ("For I scream/For ice cream")."
+    obviously we need to filter out when the user just types in the word...
+    but cases like gun/begun should be punished a bit? make this low priority
+    punning rhymes, like bare/bear are similar cases...
+    we could say, if either word's phonemes are a perfect subset of the others, then disallow the rhyme
+        we could make this an option... ie. disallow "lame rhymes" like these
+
+DONE TASKS:
+
+- settled on CMU database. Moby database is missing plurals ("hands"), has bunch of pointless phrases (like "bad actor"..wtf?), and has weird phoneme format
+- partial score for close-consonants, like S vs. Z, T vs. D
+- Difference pronunciations for same spelling, ie. “I’m so close” vs. “Close the door”
+	CMU lists variants, with close(2) etc. Just check all of them
+
 notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 
     ALLOWED:
@@ -36,35 +68,17 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     hmm seems like certain cons-phonemes MODIFY proceeding vowel-phonemes..
         L, N, NG, R
 
+    OK I'm pretty happy with what I have right now. 
+
+    lowest score for any rhyme at all is 1.0. We can't have 0.5
+
 - need to read/think about about syllables vs. phonemes..
     syllables, much more intuitive
         can give feedback like, "3 syllables rhymed! AWESOME!"
     broccoli/monopoly should score higher than fashion/ration.
-    And hollow/bottle should score low, but non-zero
+    And hollow/bottle should score low, but non-zero <-- eh forget this. it's not a very convincing rhyme.
 
     phonemes are not the most accurate either, since still/real should be a 0-rhyme. But they do end on the L phoneme.
 
-    0 means no rhyme at all. 
-- 0 means no rhyme at all. 1 is easy rhyme. 0<x<1 is barely "meh" rhyme
-
-- allow multiple words? I scream/ice cream, and sort of for "eyes cream"
-    this would work for that case!
-
-LOW PRIORITY:
-
-- "lame rhymes"
-    this paragraph on wikipedia:
-    "As stated above, in a perfect rhyme the last stressed vowel and all following sounds are identical in both words. If the sound preceding the stressed vowel is also identical, the rhyme is sometimes considered to be inferior and not a perfect rhyme after all.[2][3] An example of such a "super-rhyme" or "more than perfect rhyme" is the "identical rhyme", in which not only the vowels but also the onsets of the rhyming syllables are identical, as in gun and begun. Punning rhymes such are "bare" and "bear" are also identical rhymes. The rhyme may of course extend even farther back than the last stressed vowel. If it extends all the way to the beginning of the line, so that there are two lines that sound identical, then it is called a "holorhyme" ("For I scream/For ice cream")."
-    obviously we need to filter out when the user just types in the word...
-    but cases like gun/begun should be punished a bit? make this low priority
-    punning rhymes, like bare/bear are similar cases...
-    we could say, if either word's phonemes are a perfect subset of the others, then disallow the rhyme
-        we could make this an option... ie. disallow "lame rhymes" like these
-
-DONE TASKS:
-
-- settled on CMU database. Moby database is missing plurals ("hands"), has bunch of pointless phrases (like "bad actor"..wtf?), and has weird phoneme format
-- partial score for close-consonants, like S vs. Z, T vs. D
-- Difference pronunciations for same spelling, ie. “I’m so close” vs. “Close the door”
-	CMU lists variants, with close(2) etc. Just check all of them
-
+- refactored code to use proper linguistics names (turns out i rediscovered syllabic consonants, and had the same listed as the most common ones)
+    I no longer give 0.5 for matcing syllabic consonants, except for M, and this feels better
