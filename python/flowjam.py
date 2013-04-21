@@ -94,6 +94,7 @@ def scorePhonemes(a,b):
 
 # An "entry" is a pronunciation, ie. list of phonemes
 def scoreEntries_PhoMatch(aPhos, bPhos):
+    """ Not used any more. Not a very good way to score rhymes. """
     n = min(len(aPhos), len(bPhos))
     scoreRules = []
     score = 0
@@ -112,33 +113,79 @@ def scoreEntries_PhoMatch(aPhos, bPhos):
 #  scoring algorithm using syllables
 #----------------------------------------
 def phos2syls(phos):
-    out = []
-    for i in range(len(phos)):
-        pho = phos[i]
-        if pho in CMU_VOWEL_PHONEMES:
-            syl = pho
-            if i < len(phos)-1:
-                cons = phos[i+1]
-                assert( not cons in CMU_VOWEL_PHONEMES )
-                if cons in CMU_VOWEL_CHANGERS:
-                    syl = syl + "_" + cons
-            out.append(syl)
-    return out
+    """ Essentially acts as a lexer from phonemes to syllables """
+    sylVowels = []
+    sylConsonants = []
+    state = 'consonant'
+
+    for pho in phos:
+        if state == 'vowel':
+            assert( not pho in CMU_VOWEL_PHONEMES )
+            if pho in CMU_VOWEL_CHANGERS:
+                sylVowels[-1] = sylVowels[-1] + "_" + pho
+                state = 'vowelmod'
+            else:
+                sylConsonants.append(pho)
+                state = 'consonant'
+        elif state == 'consonant':
+            if pho in CMU_VOWEL_PHONEMES:
+                sylVowels.append(pho)
+                state = 'vowel'
+        elif state == 'vowelmod':
+            if pho in CMU_VOWEL_PHONEMES:
+                sylVowels.append(pho)
+                sylConsonants.append('') # such as, tenant
+                state = 'vowel'
+            else:
+                # do not worry about vowelmods here - two vowelmods in a row, just count the next as a consonant
+                sylConsonants.append(pho)
+                state = 'consonant'
+    if state != 'consonant':
+        sylConsonants.append('')
+    return (sylVowels, sylConsonants)
+
+def matchReverse(a,b):
+    """ Does not count empty entries """
+    n = min(len(a), len(b))
+    count = 0
+    matches = []
+    for i in range(1,n+1):
+        if a[-i] != '' and a[-i] == b[-i]:
+            count = count + 1
+            matches.append(a[-i])
+    matches.reverse()
+    return (count, matches)
 
 def scoreEntries_SylMatch(aPhos, bPhos):
-    aSyls = phos2syls(aPhos)
-    bSyls = phos2syls(bPhos)
-    n = min(len(aSyls), len(bSyls))
+    (aVowels, aConss) = phos2syls(aPhos)
+    (bVowels, bConss) = phos2syls(bPhos)
+    assert( len(aVowels) == len(aConss) )
+    assert( len(bVowels) == len(bConss) )
+
     score = 0
-    syls = []
+    vMatches = []
+    cMatches = []
+    n = min(len(aVowels), len(bVowels))
     for i in range(1,n+1):
-        aSyl = aSyls[-i]
-        bSyl = bSyls[-i]
-        if aSyl == bSyl:
-            score = score + 1
-            syls.append(aSyl)
-    syls.reverse()
-    return (score, syls)
+        av = aVowels[-i]
+        ac = aConss[-i]
+        bv = bVowels[-i]
+        bc = bConss[-i]
+        if av == bv:
+            if len(av) > 2:
+                # modified vowel match
+                score = score+1.5
+            else:
+                score = score+1
+            if ac != '' and ac == bc:
+                score = score+0.5
+                cMatches.append(ac)
+            vMatches.append(av)
+
+    vMatches.reverse()
+    cMatches.reverse()
+
+    return (score, vMatches+cMatches)
 
 def getEntriesForWord(db, word):
     if db[word] == None: return []
@@ -174,79 +221,65 @@ def phos2str(phos):
     return " ".join(phos)
 
 def testScoreEntries(db, a, b, expected):
-    (score, rules) = scoreEntries_PhoMatch(db[a], db[b])
+    (score, matches) = scoreEntries_SylMatch( db[a], db[b] )
+    print 'syl_score(%s,%s) \t %0.2f \t %0.2f \t %s' \
+         % (a,b,score, expected, phos2str(matches))
     assert( expected == None or score == expected )
-#print phos2str(db[a]), '...', phos2str(db[b])
-    print 'pho_score(%s,%s) \t %0.2f \t (%s)' % (a,b,score, phos2str(rules))
-
-    (score, syls) = scoreEntries_SylMatch( db[a], db[b] )
-    print 'syl_score(%s,%s) \t %0.2f \t (%s)' % (a,b,score, phos2str(syls))
 
 def testScoreWords(db, a, b, expected):
-    (score, rules) = scoreWords(db, a, b, scoreEntries_PhoMatch)
+    (score, matches) = scoreWords(db, a, b, scoreEntries_SylMatch)
+    print 'word_syl_score(%s,%s) \t %0.2f \t %0.2f \t %s' \
+         % (a,b,score, expected, phos2str(matches))
     assert( expected == None or score == expected )
-#print phos2str(db[a]), '...', phos2str(db[b])
-    print 'word_pho_score(%s,%s) \t %0.2f \t (%s)' % (a,b,score, phos2str(rules))
-
-    (score, syls) = scoreWords(db, a, b, scoreEntries_SylMatch)
-    print 'word_syl_score(%s,%s) \t %0.2f \t (%s)' % (a,b,score, phos2str(syls))
 
 def test():
     db = readCMUDB('../cmudict_SPHINX_40.txt')
 
     # test cases
-    testScoreEntries(db, 'book', 'look', 2.0)
-    testScoreEntries(db, 'fashion', 'ration', 4.0)
-    testScoreEntries(db, 'state', 'invade', 1.5)
-    testScoreEntries(db, 'invade', 'blade', 2.0)
-    testScoreEntries(db, 'then', 'them', 2.5)
-    testScoreEntries(db, 'close', 'close', 4.0)
-    testScoreEntries(db, 'close', 'close(2)', 3.5)
-    testScoreEntries(db, 'rose', 'close', 1.5)
-    testScoreEntries(db, 'rose', 'close(2)', 2.0)
+    testScoreEntries(db , 'book'    , 'look'     , 1.5)
+    testScoreEntries(db , 'fashion' , 'ration'   , 3.0)
+    testScoreEntries(db , 'state'   , 'invade'   , 1.0)
+    testScoreEntries(db , 'invade'  , 'blade'    , 1.5)
+    testScoreEntries(db , 'then'    , 'them'     , 0.0)
+    testScoreEntries(db , 'close'   , 'close'    , 1.5)
+    testScoreEntries(db , 'close'   , 'close(2)' , 1.0)
+    testScoreEntries(db , 'rose'    , 'close'    , 1.0)
+    testScoreEntries(db , 'rose'    , 'close(2)' , 1.5)
 
     assert( len(getEntriesForWord(db, 'associate')) == 4 )
     assert( len(getEntriesForWord(db, 'close')) == 2 )
 
-    testScoreWords(db, 'rose', 'close', 2.0)
+    testScoreWords(db, 'rose', 'close', 1.5)
 
-    testScoreEntries(db, 'out', 'doubt', 2.0)
+    testScoreEntries(db, 'out', 'doubt', 1.5)
 
-    testScoreWords(db, 'proceeding', 'leading', 4.0)
+    testScoreWords(db, 'proceeding', 'leading', 3.0)
 
     testScoreWords(db, 'dry', 'why', 1.0)
     testScoreWords(db, 'try', 'why', 1.0)
-    testScoreWords(db, 'throttle', 'bottle', 4.0)
-    testScoreWords(db, 'broccoli', 'monopoly', 4.0)
-    testScoreWords(db, 'rhyme', 'sublime', 2.0)
-    testScoreWords(db, 'bending', 'ending', 5.0)
-    testScoreWords(db, 'cacophony', 'monopoly', 3.0)
+    testScoreWords(db, 'throttle', 'bottle', 3.0)
+    testScoreWords(db, 'rhyme', 'sublime', 1.5)
+    testScoreWords(db, 'bending', 'ending', 3.5)
+    testScoreWords(db, 'venting', 'ending', 3.0)
+    testScoreWords(db, 'cacophony', 'monopoly', 2.0)
+    testScoreWords(db, 'broccoli', 'monopoly', 3.5)
 
-# TODO broccoli/monopoly should score higher than fashion/ration. And hollow/bottle should score low, but non-zero
+    testScoreEntries(db, 'bastion', 'ration', 2.5)
+    testScoreEntries(db, 'motion', 'ration', 1.5)
+    testScoreEntries(db, 'bottle', 'ration', 0.0)
 
-    testScoreEntries(db, 'bastion', 'ration', None)
-    testScoreEntries(db, 'motion', 'ration', None)
-    testScoreEntries(db, 'bottle', 'ration', None)
+    testScoreWords(db, 'green', 'fiend', 1.5)
+    testScoreWords(db, 'one', 'thumb', 0.0)
 
-# forced rhymes
-    testScoreWords(db, 'green', 'fiend', None) # this should be a 1 syllable rhyme..but the D throws it off..humm
-    testScoreWords(db, 'one', 'thumb', None)
-
-# problems
-    testScoreWords(db, 'love', 'move', None) # should be 0, but the V matches
-    testScoreWords(db, 'real', 'still', None) # should be 0, but the L matches
-    testScoreWords(db, 'compromise', 'promise', None) # should be 0...
+# testScoreWords(db, 'love', 'move', 0.0) # TODO make sure the consonant doesn't get counted again here..
+    testScoreWords(db, 'real', 'still', 0.0)
+    testScoreWords(db, 'compromise', 'promise', 0.0)
 
 # weird cases
     testScoreWords(db, 'hollow', 'bottle', 0.0) # later on, maybe allow these really-forced rhymes, but that takes more work
 
-    print phos2syls( db['broccoli'] )
-    print phos2syls( db['monopoly'] )
-    print phos2syls( db['fashion'] )
-    print phos2syls( db['ration'] )
-    print phos2syls( db['bottle'] )
-    print phos2syls( db['shake'] )
-    print phos2syls( db['hate'] )
+    testScoreEntries(db , 'rose'    , 'close(2)' , 1.5)
+    testScoreEntries(db , 'monk'    , 'flunk' , 2.0)
 
 def testLoop(db):
     prompt = 'Enter a word, or nothing to exit: '
