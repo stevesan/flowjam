@@ -31,40 +31,6 @@ def readCMUDB(path):
     print 'Read %d words from CMU database at %s' % (len(out.keys()), path)
     return out
 
-def isSamePair(a, b, c, d):
-    """ Returns true if [a,b] is the same unordered pair as [c,d] """
-    if a == c and b == d: return True
-    if a == d and b == c: return True
-    return False
-
-def scorePhonemes(a,b):
-    """ returns (score, rule). rule is the phoneme symbol that represents the rule which resulted in the score. """
-    if a == b: return (1,'='+a)
-# TODO score same vowels with 1, but don't give as much for same consonants? except at end?
-    elif isSamePair(a,b, 'T', 'D'): return (0.5, '~TD')
-    elif isSamePair(a,b, 'M', 'N'): return (0.5, '~MN')
-    elif isSamePair(a,b, 'S', 'Z'): return (0.5, '~SZ')
-    elif isSamePair(a,b, 'B', 'D'): return (0.25, '~BD')
-    else:
-        return (0, None)
-
-# An "entry" is a pronunciation, ie. list of phonemes
-def scoreEntries_PhoMatch(aPhos, bPhos):
-    """ Not used any more. Not a very good way to score rhymes. """
-    n = min(len(aPhos), len(bPhos))
-    scoreRules = []
-    score = 0
-    for i in range(1,n+1):
-        # score in reverse order
-        pa = aPhos[-i]
-        pb = bPhos[-i]
-        (phoScore, rule) = scorePhonemes(pa, pb)
-        if phoScore > 0:
-            scoreRules.append(rule)
-            score = score + phoScore
-    scoreRules.reverse()
-    return (score, scoreRules)
-
 def phos2syls(phos):
     """ Essentially acts as a lexer from phonemes to syllables. Currently ignores the onset, since the 'rhyme' only consists of nucleus and coda.
         https://en.wikipedia.org/wiki/Syllable """
@@ -116,12 +82,9 @@ def matchReverse(a,b):
     matches.reverse()
     return (count, matches)
 
-
 def scoreEntries_SylMatch(aPhos, bPhos):
     (aNukes, aCodas) = phos2syls(aPhos)
     (bNukes, bCodas) = phos2syls(bPhos)
-    assert( len(aNukes) == len(aCodas) )
-    assert( len(bNukes) == len(bCodas) )
 
     score = 0
     vMatches = []
@@ -258,6 +221,8 @@ def test():
     # check multi-consonant codas
     testScoreEntries(db , 'clasp'    , 'clasped' , 1.0)
     testScoreEntries(db , 'clasp'    , 'rasp' , 1.5)
+    testScoreWords(db, 'broccoli', 'properly', 2.0)
+    testScoreWords(db, 'broccoli', 'locally', 2.0)
 
 def testLoop(db):
     prompt = 'Enter a word, or nothing to exit: '

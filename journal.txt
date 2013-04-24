@@ -16,6 +16,8 @@ TASK LIST:
 
 LOW PRIORITY:
 
+- could still use the 'scorePhonemes' function to score coda matches. Like, give D/T 0.25...meh.
+
 - "lame rhymes"
     this paragraph on wikipedia:
     "As stated above, in a perfect rhyme the last stressed vowel and all following sounds are identical in both words. If the sound preceding the stressed vowel is also identical, the rhyme is sometimes considered to be inferior and not a perfect rhyme after all.[2][3] An example of such a "super-rhyme" or "more than perfect rhyme" is the "identical rhyme", in which not only the vowels but also the onsets of the rhyming syllables are identical, as in gun and begun. Punning rhymes such are "bare" and "bear" are also identical rhymes. The rhyme may of course extend even farther back than the last stressed vowel. If it extends all the way to the beginning of the line, so that there are two lines that sound identical, then it is called a "holorhyme" ("For I scream/For ice cream")."
