@@ -25,6 +25,7 @@ def readCMUDB(path):
             parts = entry.split('\t')
             if len(parts) < 2:
                 print 'Skipping line: "%s"' % line
+                continue
             word = parts[0].lower() # CMU is all caps
             phos = parts[1].strip()
             out[word] = phos.split(' ')
@@ -157,7 +158,7 @@ def testScoreWords(db, a, b, expected):
     assert( expected == None or score == expected )
 
 def test():
-    db = readCMUDB('../cmudict_SPHINX_40.txt')
+    db = readCMUDB('../unity_flowjam/Assets/cmudict_SPHINX_40.txt')
 
     # test cases
     testScoreEntries(db , 'book'    , 'look'     , 1.5)
