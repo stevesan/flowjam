@@ -17,7 +17,7 @@ private function PresentNewWord()
 {
     wordDisplay.text = RhymeScorer.Get().GetRandomWord();
     inputDisplay.text = '';
-    scoreFeedbackDisplay.text = 'TYPE A RHYME!!';
+    scoreFeedbackDisplay.text = 'TYPE A RHYME!! Or blank to skip';
 }
 
 private function OnInputChanged()
@@ -54,7 +54,7 @@ function Update()
             {
                 score = RhymeScorer.Get().ScoreWords( inputDisplay.text, wordDisplay.text );
                 totalScore += score;
-                scoreDisplay.text = ""+totalScore;
+                scoreDisplay.text = "SCORE: "+totalScore;
             }
 
             PresentNewWord();

@@ -169,12 +169,12 @@ function ScorePronuns( aPhos:String[], bPhos:String[] )
 function GetPronunsForWord(word:String)
 {
     var pronuns = new List.<String[]>();
-    pronuns.Add( proDict[word] );
+    pronuns.Add( proDict[word.ToLower()] );
 
     var i = 2;
     while( true )
     {
-        var key = word+"("+i+")";
+        var key = word.ToLower()+"("+i+")";
         if( proDict.ContainsKey(key) )
             pronuns.Add( proDict[key] );
         else

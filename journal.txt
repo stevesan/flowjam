@@ -1,5 +1,7 @@
 TASK LIST:
 
+- debug assert for 'p'
+
 - player feedback:
     0.0 = FAIL
     1.0 = OK
