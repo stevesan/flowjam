@@ -2,6 +2,8 @@
 
 var cmuDatabase:TextAsset;
 private var proDict:Dictionary.<String, String[]> = null;
+private var proDictWords:List.<String> = null;
+private var proDictWordsSet:HashSet.<String> = null;
 
 static private var sSingleton:RhymeScorer;
 
@@ -69,10 +71,16 @@ function Phos2Syls( phos:String[] ) : List.<Syllable>
     {
         if( state == 'vowel' )
         {
-            Utils.Assert( !vowelSet.Contains(pho) );
             Utils.Assert( syls.Count > 0 );
 
-            if( sylConSet.Contains(pho) )
+            if( vowelSet.Contains(pho) )
+            {
+                // We can have two vowels in a row, such as the end of "pectoral"
+                syls.Add(new Syllable());
+                GetLast(syls).nucleus = pho;
+                state = 'vowel';
+            }
+            else if( sylConSet.Contains(pho) )
             {
                 GetLast(syls).nucleus += '_' + pho;
                 state = 'sylcon';
@@ -242,7 +250,6 @@ function RunTestCases()
 
     TestScoreWords('hollow', 'bottle', 0.0);
 
-    TestScoreWords('rose'    , 'close(2)' , 1.5);
     TestScoreWords('monk'    , 'flunk' , 1.5);
     TestScoreWords('mend'    , 'bend' , 1.5);
     TestScoreWords('med'    , 'bed' , 1.5);
@@ -264,6 +271,17 @@ function RunTestCases()
     Debug.Log('-- Tests done --');
 }
 
+function GetRandomWord()
+{
+    var i = Random.Range(0, proDictWords.Count);
+    return proDictWords[i];
+}
+
+function GetIsWord(word:String)
+{
+    return proDictWordsSet.Contains(word);
+}
+
 function Awake()
 {
     sSingleton = this;
@@ -273,6 +291,18 @@ function Awake()
     //----------------------------------------
     var lines = cmuDatabase.text.Split('\n'[0]);
     proDict = ParseCMUDatabase(lines);
+
+    proDictWords = new List.<String>();
+    proDictWordsSet = new HashSet.<String>();
+    for( var word in proDict.Keys )
+    {
+        if( word.IndexOf("(") == -1 )
+        {
+            // not a variant - use it
+            proDictWords.Add(word);
+            proDictWordsSet.Add(word);
+        }
+    }
 
     for( var i = 0; i < VOWEL_PHONEMES.length; i++ )
         vowelSet.Add(VOWEL_PHONEMES[i]);
