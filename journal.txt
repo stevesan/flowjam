@@ -27,6 +27,11 @@ LOW PRIORITY:
     we could say, if either word's phonemes are a perfect subset of the others, then disallow the rhyme
         we could make this an option... ie. disallow "lame rhymes" like these
 
+- we can read more about syllabification:
+http://en.wikipedia.org/wiki/Sonority_hierarchy
+http://ebooks.unibuc.ro/filologie/mateescu/pdf/77.pdf
+
+
 DONE TASKS:
 
 - settled on CMU database. Moby database is missing plurals ("hands"), has bunch of pointless phrases (like "bad actor"..wtf?), and has weird phoneme format
