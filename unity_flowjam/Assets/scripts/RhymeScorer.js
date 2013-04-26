@@ -2,8 +2,8 @@
 
 var cmuDatabase:TextAsset;
 private var proDict:Dictionary.<String, String[]> = null;
-private var proDictWords:List.<String> = null;
-private var proDictWordsSet:HashSet.<String> = null;
+private var validPromptWords:List.<String> = null;
+private var validAnswerWords:HashSet.<String> = null;
 
 static private var sSingleton:RhymeScorer;
 
@@ -116,7 +116,6 @@ function Phos2Syls( phos:String[] ) : List.<Syllable>
             }
             else
             {
-                Utils.Assert( !sylConSet.Contains(pho) );
                 Utils.Assert( syls.Count > 0 );
                 GetLast(syls).coda = pho;
                 state = 'consonant';
@@ -161,6 +160,11 @@ function ScorePronuns( aPhos:String[], bPhos:String[] )
             if( a.coda.length > 0 && a.coda == b.coda )
                 score += 0.5;
         }
+        else
+        {
+            // if nucleii don't rhyme, we must break it here
+            break;
+        }
     }
 
     return score;
@@ -185,8 +189,17 @@ function GetPronunsForWord(word:String)
     return pronuns;
 }
 
+function IsTooSimilar( a:String, b:String )
+{
+    return a.IndexOf(b) != -1
+        || b.IndexOf(a) != -1;
+}
+
 function ScoreWords(a:String, b:String)
 {
+    if( IsTooSimilar(a, b) )
+        return 0.0;
+
     // find all variants
     var aPros = GetPronunsForWord(a);
     var bPros = GetPronunsForWord(b);
@@ -217,7 +230,7 @@ function RunTestCases()
     TestScoreWords('state'   , 'invade'   , 1.0);
     TestScoreWords('invade'  , 'blade'    , 1.5);
     TestScoreWords('then'    , 'them'     , 0.0);
-    TestScoreWords('close'   , 'close'    , 1.5);
+    TestScoreWords('close'   , 'close'    , 0.0);
     TestScoreWords('rose'    , 'close'    , 1.5);
 
     TestScoreWords('rose', 'close', 1.5);
@@ -231,9 +244,9 @@ function RunTestCases()
     TestScoreWords('throttle', 'bottle', 2.5);
     TestScoreWords('rhyme', 'sublime', 1.5);
     TestScoreWords('climb', 'sublime', 1.5);
-    TestScoreWords('bending', 'ending', 2.5);
+    TestScoreWords('bending', 'spending', 2.5);
     TestScoreWords('venting', 'ending', 2.0);
-    TestScoreWords('cacophony', 'monopoly', 2.0);
+    TestScoreWords('cacophony', 'monopoly', 1.0);
     TestScoreWords('broccoli', 'monopoly', 3.0);
 
     TestScoreWords('bastion', 'ration', 2.0);
@@ -241,7 +254,7 @@ function RunTestCases()
     TestScoreWords('bottle', 'ration', 0.0);
 
     TestScoreWords('green', 'fiend', 1.0);
-    TestScoreWords('friend', 'end', 1.5);
+    TestScoreWords('friend', 'mend', 1.5);
     TestScoreWords('one', 'thumb', 0.0);
 
     TestScoreWords('love', 'move', 0.0);
@@ -264,22 +277,47 @@ function RunTestCases()
     TestScoreWords('scrunch'    , 'lunch' , 1.5);
 
     // check multi-consonant codas
-    TestScoreWords('clasp'    , 'clasped' , 1.0);
-    TestScoreWords('clasp'    , 'rasp' , 1.5);
-    TestScoreWords('broccoli', 'properly', 2.0);
+    TestScoreWords('grasp'    , 'clasped' , 1.0);
+    TestScoreWords('clasp'    , 'grasp' , 1.5);
+    TestScoreWords('broccoli', 'properly', 1.0);
     TestScoreWords('broccoli', 'locally', 2.0);
+    TestScoreWords('hands', 'dance', 1.0);
     Debug.Log('-- Tests done --');
 }
 
-function GetRandomWord()
+function GetRandomPromptWord()
 {
-    var i = Random.Range(0, proDictWords.Count);
-    return proDictWords[i];
+    var i = Random.Range(0, validPromptWords.Count);
+    return validPromptWords[i];
 }
 
 function GetIsWord(word:String)
 {
-    return proDictWordsSet.Contains(word);
+    return validAnswerWords.Contains(word);
+}
+
+function ComputePromptEasiness(prompt:String)
+{
+    Utils.Assert( validPromptWords.Contains(prompt) );
+
+    // go through all valid answers and compute total rhyme score
+    var score = 0.0;
+    var highestScore = 0.0;
+    var bestWord = '';
+    for( var other in validPromptWords )
+    {
+        if( other != prompt )
+        {
+            var s = ScoreWords(prompt, other);
+            score += s;
+            if( s > highestScore )
+            {
+                highestScore = s;
+                bestWord = other;
+            }
+        }
+    }
+    Debug.Log("final total score for "+prompt+" = "+score+" best = "+bestWord);
 }
 
 function Awake()
@@ -292,15 +330,19 @@ function Awake()
     var lines = cmuDatabase.text.Split('\n'[0]);
     proDict = ParseCMUDatabase(lines);
 
-    proDictWords = new List.<String>();
-    proDictWordsSet = new HashSet.<String>();
+    validPromptWords = new List.<String>();
+    validAnswerWords = new HashSet.<String>();
     for( var word in proDict.Keys )
     {
-        if( word.IndexOf("(") == -1 )
+        // Ignore variants and words with apostrophes
+        if( word.IndexOf("(") == -1
+                && word.IndexOf("'") == -1
+                && word.IndexOf("-") == -1
+                && word.IndexOf(".") == -1
+          )
         {
-            // not a variant - use it
-            proDictWords.Add(word);
-            proDictWordsSet.Add(word);
+            validPromptWords.Add(word);
+            validAnswerWords.Add(word);
         }
     }
 
@@ -312,6 +354,8 @@ function Awake()
 
 
     RunTestCases();
+
+    ComputePromptEasiness('apostrophe');
 }
 
 function Start()

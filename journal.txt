@@ -1,6 +1,22 @@
 TASK LIST:
 
+- compute difficulty of words by mining the database for total score
+- filter out really obscure words: get some source of words and mine it.
+
+- think:
+    should have diferent game modes.
+    have timed mode..
+    turn-based mode?
+    Sequence-like battle mode?
+    PvP mode?
+
 - debug assert for 'p'
+- debug assert for c, co, cor, corn
+
+- design idea: use the climber setup, but you need to fill a bar to take a step.
+    more rhyme score == more bar.
+    so, no numbers, just purely visual feedback
+    you can skip words, but you sacrifice some time (may be 0.5s)
 
 - player feedback:
     0.0 = FAIL

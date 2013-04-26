@@ -9,23 +9,35 @@ var totalScore = 0.0;
 
 function Start()
 {
-    scoreDisplay.text = '0';
+    scoreDisplay.text = 'SCORE: 0';
     PresentNewWord();
 }
 
 private function PresentNewWord()
 {
-    wordDisplay.text = RhymeScorer.Get().GetRandomWord();
+    wordDisplay.text = RhymeScorer.Get().GetRandomPromptWord();
     inputDisplay.text = '';
-    scoreFeedbackDisplay.text = 'TYPE A RHYME!! Or blank to skip';
+    scoreFeedbackDisplay.text = 'ENTER A WORD THAT RHYMES!!\nOr blank to skip';
+}
+
+function IsTooSimilar( prompt:String, answer:String )
+{
+    return RhymeScorer.Get().IsTooSimilar(prompt, answer);
 }
 
 private function OnInputChanged()
 {
     if( RhymeScorer.Get().GetIsWord( inputDisplay.text ) )
     {
-        var score = RhymeScorer.Get().ScoreWords( inputDisplay.text, wordDisplay.text );
-        scoreFeedbackDisplay.text = ''+score;
+        if( IsTooSimilar( wordDisplay.text, inputDisplay.text ) )
+        {
+            scoreFeedbackDisplay.text = 'TOO SIMILAR. LAME!!';
+        }
+        else
+        {
+            var score = RhymeScorer.Get().ScoreWords( inputDisplay.text, wordDisplay.text );
+            scoreFeedbackDisplay.text = '+'+score;
+        }
     }
     else
     {
