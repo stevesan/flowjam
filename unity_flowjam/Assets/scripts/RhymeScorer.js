@@ -335,7 +335,8 @@ function Awake()
     for( var word in proDict.Keys )
     {
         // Ignore variants and words with apostrophes
-        if( word.IndexOf("(") == -1
+        if( word.length > 1
+                && word.IndexOf("(") == -1
                 && word.IndexOf("'") == -1
                 && word.IndexOf("-") == -1
                 && word.IndexOf(".") == -1
@@ -355,7 +356,8 @@ function Awake()
 
     RunTestCases();
 
-    ComputePromptEasiness('apostrophe');
+    //ComputePromptEasiness('apostrophe');
+    ComputePromptEasiness('asparagus');
 }
 
 function Start()
