@@ -22,7 +22,7 @@ var feedbackDisplay:GUIText;
 //----------------------------------------
 var typeSound:AudioClip;
 var eraseSound:AudioClip;
-var numSylsToSound:AudioClip[];
+var bonus2sound:AudioClip[];
 var comboBreakSound:AudioClip;
 
 //----------------------------------------
@@ -55,7 +55,7 @@ function Start()
 
 class ScoreInfo
 {
-    var numSyls:int;
+    var bonus:int;
     var score:float;
 };
 
@@ -64,11 +64,11 @@ private function ScoreWords(a:String, b:String)
     var raw = RhymeScorer.Get().ScoreWords(a,b);
 
     // We adjust the score to reflect the fact that rhyming syllables gets much harder they more you already have
-    // so, map the score to an x^2 curve, sort of
-    var rv = new ScoreInfo();
-    rv.numSyls = Mathf.Floor(raw);
-    rv.score = raw + (rv.numSyls-1);
-    return rv;
+    // so, map the score to an x^2 curve, sort of..
+    var info = new ScoreInfo();
+    info.bonus = Mathf.Floor(raw)-1;
+    info.score = raw + info.bonus;
+    return info;
 }
 
 private function PresentNewWord()
@@ -103,18 +103,17 @@ private function UpdateAllDisplays()
         {
             var info = ScoreWords( answerWord, promptDisplay.text );
             var score = info.score;
-            //feedbackDisplay.text = info.numSyls + ' syllables = '+score+ ' points';
             if( score > 0 )
             {
                 feedbackDisplay.material.color = Color(0.0, 1.0, 0, 1.0);
 
-                if( info.numSyls >= 4 )
+                if( info.bonus >= 3 )
                     feedbackDisplay.text = 'OMG WTF BBQ';
-                else if( info.numSyls >= 3 )
+                else if( info.bonus >= 2 )
                     feedbackDisplay.text = 'EXCELLENT!';
-                else if( info.numSyls >= 2 )
+                else if( info.bonus >= 1 )
                     feedbackDisplay.text = 'GREAT!';
-                else if( info.numSyls >= 1 )
+                else if( info.score > 0 )
                     feedbackDisplay.text = 'GOOD';
 
                 feedbackDisplay.text += ' +' +score.ToString('0.0');
@@ -169,9 +168,6 @@ function Update()
             var score = info.score;
             totalScore += Mathf.Max(1, comboCount)*score;
 
-            // Determine sound to play
-            var soundId = Mathf.Min( numSylsToSound.length-1, info.numSyls );
-            soundToPlay = numSylsToSound[soundId];
 
             if( score > 0 )
             {
@@ -179,6 +175,8 @@ function Update()
                     comboCount++;
                 GetComponent(Connectable).TriggerEvent("OnRhymeSuccess");
 
+                var soundId = Mathf.Min( bonus2sound.length-1, info.bonus );
+                soundToPlay = bonus2sound[soundId];
             }
             else
             {
@@ -189,6 +187,9 @@ function Update()
                 }
                 comboCount = 0;
                 GetComponent(Connectable).TriggerEvent("OnRhymeFail");
+
+                // TODO - play a fail sound?
+                soundToPlay = typeSound;
             }
 
             PresentNewWord();
@@ -197,7 +198,6 @@ function Update()
         {
             answerWord += c;
             UpdateAllDisplays();
-
             soundToPlay = typeSound;
         }
     }

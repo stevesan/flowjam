@@ -356,6 +356,9 @@ function RunTestCases()
     // AH/IH-S special cases
     TestScoreWords('emptiness', 'friendliness', 2.5);
     TestScoreWords('abortionist', 'pessimist', 1.5);
+    
+    TestScoreWords('obsessions', 'recession', 2.5);
+    TestScoreWords('obsessions', 'recessions', 3.0);
 
     Debug.Log('-- Tests done --');
 }

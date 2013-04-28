@@ -1,42 +1,29 @@
 TASK LIST:
 
+- think:
+    definitely need:
+        timed mode
+        turn-based
+    Sequence-like battle mode?
+    PvP mode? see who gets the most number of points for a single word in 1 minute?
 
-- filter out really obscure words: get some source of words and mine it.
-    mine wikipedia
+- compute difficulty of words by mining the database for total score?
+- frequency: would be good to avoid super obscure words
+    mine wikipedia?
+
 - multiple words
+    I scream/ice cream
+    orange/four hinge
 
 - alliteration bonus!
+- allow user to stay on the same word? coming up with multiple rhymes could be fun..
+    text twist style..
 - list of words at end of round.
-- compute difficulty of words by mining the database for total score
-
-- think:
-    should have diferent game modes.
-    have timed mode..
-    turn-based mode?
-    Sequence-like battle mode?
-    PvP mode?
-
-- debug assert for 'p'
-- debug assert for c, co, cor, corn
 
 - design idea: use the climber setup, but you need to fill a bar to take a step.
     more rhyme score == more bar.
     so, no numbers, just purely visual feedback
     you can skip words, but you sacrifice some time (may be 0.5s)
-
-- player feedback:
-    0.0 = FAIL
-    1.0 = OK
-    1.5 = Good
-    2.0 = Good
-    2.5 = Great
-    3.0 = Great
-    3.5+ = EXCELLENT!
-
-- prevent lame rhymes and just repeating the word
-
-- allow multiple words? I scream/ice cream, and sort of for "eyes cream"
-    this would work for that case!
 
 LOW PRIORITY:
 
@@ -54,7 +41,6 @@ LOW PRIORITY:
 - we can read more about syllabification:
 http://en.wikipedia.org/wiki/Sonority_hierarchy
 http://ebooks.unibuc.ro/filologie/mateescu/pdf/77.pdf
-
 
 DONE TASKS:
 
@@ -118,3 +104,23 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     abortionist vs. pessimist
 - think about combo system...too powerful?
     yes, ditching it
+- filter out really obscure words: get some source of words and mine it.
+    done using Moby word list
+- debug assert for 'p'
+- debug assert for c, co, cor, corn
+    fixed, there was a slight bug in the code i fixed at some pt
+- debug: obsessions/recessions - adding S should not bump your score up by 4...
+    OK redid the bonus system - no longer assuming floor gives me number of syllables..heh
+- player feedback:
+    0.0 = FAIL
+    1.0 = OK
+    1.5 = Good
+    2.0 = Good
+    2.5 = Great
+    3.0 = Great
+    3.5+ = EXCELLENT!
+    in the game, but slightly different
+- use stars to rate rhymes? better than word feedback
+    eh..no, stars + points would get confusing.. but better VISUAL feedback wouldn't hurt, just don't tie it to some quantity
+- prevent lame rhymes and just repeating the word
+    done, just checking substrings
