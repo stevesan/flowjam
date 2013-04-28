@@ -264,6 +264,9 @@ function IsTooSimilar( a:String, b:String )
 
 function ScoreWords(a:String, b:String)
 {
+    if( !GetIsWord(a) || !GetIsWord(b) )
+        return 0.0;
+
     if( IsTooSimilar(a, b) )
         return 0.0;
 

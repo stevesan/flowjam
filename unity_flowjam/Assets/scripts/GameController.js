@@ -22,7 +22,7 @@ var feedbackDisplay:GUIText;
 //----------------------------------------
 var typeSound:AudioClip;
 var eraseSound:AudioClip;
-var scoreSound:AudioClip;
+var numSylsToSound:AudioClip[];
 var comboBreakSound:AudioClip;
 
 //----------------------------------------
@@ -67,7 +67,7 @@ private function ScoreWords(a:String, b:String)
     // so, map the score to an x^2 curve, sort of
     var rv = new ScoreInfo();
     rv.numSyls = Mathf.Floor(raw);
-    rv.score = raw * rv.numSyls;
+    rv.score = raw + (rv.numSyls-1);
     return rv;
 }
 
@@ -145,7 +145,7 @@ function Update()
     promptDisplay.transform.position.x = 0.5 - Mathf.Sin(2*Mathf.PI*1.0*Time.time)*0.010;
     answerDisplay.material.color = Color(0.5, 1.0, 0.5, 1.0) + Utils.RandomColor();
 
-    var inputSoundClip:AudioClip = null;
+    var soundToPlay:AudioClip = null;
 
     for( var c:char in Input.inputString )
     {
@@ -156,7 +156,7 @@ function Update()
             {
                 answerWord = answerWord.Substring(0, answerWord.Length - 1);
                 UpdateAllDisplays();
-                inputSoundClip = eraseSound;
+                soundToPlay = eraseSound;
             }
             else
             {
@@ -165,36 +165,27 @@ function Update()
         }
         else if( c == "\n"[0] || c == "\r"[0] ) // "\n" for Mac, "\r" for windows.
         {
-            if( RhymeScorer.Get().GetIsWord( answerWord ) )
-            {
-                var info = ScoreWords( answerWord, promptDisplay.text );
-                var score = info.score;
-                totalScore += Mathf.Max(1, comboCount)*score;
+            var info = ScoreWords( answerWord, promptDisplay.text );
+            var score = info.score;
+            totalScore += Mathf.Max(1, comboCount)*score;
 
-                if( score > 0 )
-                {
-                    if( s_useIntraWordCombos )
-                        comboCount++;
-                    GetComponent(Connectable).TriggerEvent("OnRhymeSuccess");
-                    inputSoundClip = scoreSound;
-                }
-                else
-                {
-                    if( comboCount > 0 )
-                    {
-                        GetComponent(Connectable).TriggerEvent("OnComboBreak");
-                        inputSoundClip = comboBreakSound;
-                    }
-                    comboCount = 0;
-                    GetComponent(Connectable).TriggerEvent("OnRhymeFail");
-                }
+            // Determine sound to play
+            var soundId = Mathf.Min( numSylsToSound.length-1, info.numSyls );
+            soundToPlay = numSylsToSound[soundId];
+
+            if( score > 0 )
+            {
+                if( s_useIntraWordCombos )
+                    comboCount++;
+                GetComponent(Connectable).TriggerEvent("OnRhymeSuccess");
+
             }
             else
             {
                 if( comboCount > 0 )
                 {
                     GetComponent(Connectable).TriggerEvent("OnComboBreak");
-                    inputSoundClip = comboBreakSound;
+                    soundToPlay = comboBreakSound;
                 }
                 comboCount = 0;
                 GetComponent(Connectable).TriggerEvent("OnRhymeFail");
@@ -207,11 +198,11 @@ function Update()
             answerWord += c;
             UpdateAllDisplays();
 
-            inputSoundClip = typeSound;
+            soundToPlay = typeSound;
         }
     }
 
-    if( inputSoundClip != null )
-        AudioSource.PlayClipAtPoint( inputSoundClip, Camera.main.transform.position );
+    if( soundToPlay != null )
+        AudioSource.PlayClipAtPoint( soundToPlay, Camera.main.transform.position );
 
 }
