@@ -109,7 +109,7 @@ private function UpdateAllDisplays()
                 feedbackDisplay.material.color = Color(0.0, 1.0, 0, 1.0);
 
                 if( info.numSyls >= 4 )
-                    feedbackDisplay.text = 'GOD-LIKE :O';
+                    feedbackDisplay.text = 'OMG WTF BBQ';
                 else if( info.numSyls >= 3 )
                     feedbackDisplay.text = 'EXCELLENT!';
                 else if( info.numSyls >= 2 )

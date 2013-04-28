@@ -1,6 +1,8 @@
 #pragma strict
 
 var cmuDatabase:TextAsset;
+var mobyWordList:TextAsset;
+
 private var proDict:Dictionary.<String, String[]> = null;
 private var validPromptWords:List.<String> = null;
 private var validAnswerWords:HashSet.<String> = null;
@@ -16,12 +18,40 @@ static private var VOWEL_PHONEMES = [
 
 static private var SYLLABIC_CONSONANTS = [ "L", "M", "N", "NG", "R" ];
 
+private var mobyWordSet = new HashSet.<String>();
 private var vowelSet = new HashSet.<String>();
 private var sylConSet = new HashSet.<String>();
 
 static function Get()
 {
     return sSingleton;
+}
+
+//----------------------------------------
+//  Just adds each word to the word hash set
+//----------------------------------------
+function ParseMobyWordList( lines:String[] )
+{
+    for( line in lines )
+    {
+        mobyWordSet.Add(line.Trim());
+    }
+
+    Debug.Log('parsed '+mobyWordSet.Count+' words from Moby list');
+}
+
+//----------------------------------------
+//  Strips off the variant indicies, ie. close(2) -> close
+//----------------------------------------
+function CMUKey2Word(key:String)
+{
+    var i = key.IndexOf('(');
+    if( i != -1 )
+    {
+        return key.Substring(0, i);
+    }
+    else
+        return key;
 }
 
 function ParseCMUDatabase( lines:String[] )
@@ -36,12 +66,12 @@ function ParseCMUDatabase( lines:String[] )
             Debug.Log("Skipping line: " + line);
             continue;
         }
-        var word = parts[0].ToLower();
-        var phos = parts[1];
-        db.Add( word, phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
+        var key = parts[0].ToLower().Trim();
+        var phos = parts[1].Trim();
+        db.Add( key, phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
     }
 
-    Debug.Log("parsed "+db.Count+" words");
+    Debug.Log("added "+db.Count+" words to pronun db");
 
     return db;
 }
@@ -208,13 +238,14 @@ function ScorePronuns( aPhos:String[], bPhos:String[] )
 
 function GetPronunsForWord(word:String)
 {
+    word = word.ToLower();
     var pronuns = new List.<String[]>();
-    pronuns.Add( proDict[word.ToLower()] );
+    pronuns.Add( proDict[word] );
 
     var i = 2;
     while( true )
     {
-        var key = word.ToLower()+"("+i+")";
+        var key = word+"("+i+")";
         if( proDict.ContainsKey(key) )
             pronuns.Add( proDict[key] );
         else
@@ -371,22 +402,35 @@ function Awake()
     var lines = cmuDatabase.text.Split('\n'[0]);
     proDict = ParseCMUDatabase(lines);
 
+    // Parse in moby word list
+    ParseMobyWordList( mobyWordList.text.Split('\n'[0]) );
+    Utils.Assert( mobyWordSet.Contains('close') );
+
+    //----------------------------------------
+    //  Decide which words are allowed as prompts and answers
+    //----------------------------------------
     validPromptWords = new List.<String>();
     validAnswerWords = new HashSet.<String>();
-    for( var word in proDict.Keys )
+    for( var key in proDict.Keys )
     {
         // Ignore variants and words with apostrophes
-        if( word.length > 1
-                && word.IndexOf("(") == -1
-                && word.IndexOf("'") == -1
-                && word.IndexOf("-") == -1
-                && word.IndexOf(".") == -1
+        if( key.length > 1
+                && key.IndexOf("(") == -1
+                && key.IndexOf("'") == -1
+                && key.IndexOf("-") == -1
+                && key.IndexOf(".") == -1
           )
         {
-            validPromptWords.Add(word);
-            validAnswerWords.Add(word);
+            // do not give proper nouns as prompts
+            if( mobyWordSet.Contains(key) )
+                validPromptWords.Add(key);
+
+            // But allow answers to be proper nouns
+            validAnswerWords.Add(key);
         }
     }
+
+    Debug.Log('prompt list has '+validPromptWords.Count+ ' words');
 
     for( var i = 0; i < VOWEL_PHONEMES.length; i++ )
         vowelSet.Add(VOWEL_PHONEMES[i]);
