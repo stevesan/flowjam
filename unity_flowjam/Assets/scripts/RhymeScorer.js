@@ -136,6 +136,33 @@ function Syls2String( syls:List.<Syllable> )
     return s;
 }
 
+function IsSamePair(a1:String, b1:String, a2:String, b2:String)
+{
+    return (a1 == a2 && b1 == b2)
+        || (a1 == b2 && b1 == a2);
+}
+
+function NucleiiMatch(a:Syllable, b:Syllable)
+{
+    if( a.nucleus == b.nucleus )
+        return true;
+
+    // hack for AH-S and IH-S, like friendliness/emptiness, abortionist/perfectionist
+    if( a.coda.Length > 0
+            && b.coda.Length > 0
+            && a.coda[0] == 'S'
+            && b.coda[0] == 'S'
+            && IsSamePair( a.nucleus, b.nucleus, 'AH', 'IH' ) )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+//----------------------------------------
+//  All sorts of special-cases here..
+//----------------------------------------
 function ScorePronuns( aPhos:String[], bPhos:String[] )
 {
     var aSyls = Phos2Syls(aPhos);
@@ -148,17 +175,26 @@ function ScorePronuns( aPhos:String[], bPhos:String[] )
         var a = GetReverse(aSyls, i);
         var b = GetReverse(bSyls, i);
 
-        if( a.nucleus == b.nucleus )
+        if( NucleiiMatch(a, b) )
         {
+            var hackForMUsed = false;
+
             // slight hack here - if the syl-con is an M, give 0.5 to kind of count it as a matching coda..
             if( a.nucleus.length > 2 && GetLast(a.nucleus) == 'M' )
+            {
+                hackForMUsed = true;
                 score += 1.5;
+            }
             else
                 score += 1.0;
 
             // Bonus 0.5 for coda
-            if( a.coda.length > 0 && a.coda == b.coda )
+            if( a.coda.length > 0
+                    && a.coda == b.coda
+                    && !hackForMUsed )
+            {
                 score += 0.5;
+            }
         }
         else
         {
@@ -282,6 +318,11 @@ function RunTestCases()
     TestScoreWords('broccoli', 'properly', 1.0);
     TestScoreWords('broccoli', 'locally', 2.0);
     TestScoreWords('hands', 'dance', 1.0);
+
+    // AH/IH-S special cases
+    TestScoreWords('emptiness', 'friendliness', 2.5);
+    TestScoreWords('abortionist', 'pessimist', 1.5);
+
     Debug.Log('-- Tests done --');
 }
 

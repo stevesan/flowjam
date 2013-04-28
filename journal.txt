@@ -1,15 +1,13 @@
 TASK LIST:
 
-- multiple words
+
 - filter out really obscure words: get some source of words and mine it.
     mine wikipedia
+- multiple words
 
+- alliteration bonus!
 - list of words at end of round.
-- think about combo system...too powerful?
 - compute difficulty of words by mining the database for total score
-
-- friendliness vs. emptiness consider allowing AH S == IH S
-    abortionist vs. perfectionist
 
 - think:
     should have diferent game modes.
@@ -116,3 +114,7 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 - refactored code to use proper linguistics names (turns out i rediscovered syllabic consonants, and had the same listed as the most common ones)
     I no longer give 0.5 for matcing syllabic consonants, except for M, and this feels better
 - combos
+- friendliness vs. emptiness consider allowing AH S == IH S
+    abortionist vs. pessimist
+- think about combo system...too powerful?
+    yes, ditching it
