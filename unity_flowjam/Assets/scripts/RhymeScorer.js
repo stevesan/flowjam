@@ -357,7 +357,8 @@ function Awake()
     RunTestCases();
 
     //ComputePromptEasiness('apostrophe');
-    ComputePromptEasiness('asparagus');
+    //ComputePromptEasiness('asparagus');
+    //ComputePromptEasiness('hedgehog');
 }
 
 function Start()
