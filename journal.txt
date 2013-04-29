@@ -1,5 +1,12 @@
 TASK LIST:
 
+- what's my goal? to make you think of rhymes, preferably with more syllables.
+    should be easy to play with
+
+- multiple words
+    I scream/ice cream
+    orange/four hinge
+
 - think:
     definitely need:
         timed mode
@@ -7,17 +14,20 @@ TASK LIST:
     Sequence-like battle mode?
     PvP mode? see who gets the most number of points for a single word in 1 minute?
 
+- need to see what kind of words are in the Moby list but not in CMU
+
+- bonus for 2 greats in a row?
+    well..sometimes you only get single-syllabe words though.
+    DO NOT PROMPT SINGLE-SYLLABLE WORDS?
+
 - compute difficulty of words by mining the database for total score?
 - frequency: would be good to avoid super obscure words
     mine wikipedia?
 
-- multiple words
-    I scream/ice cream
-    orange/four hinge
-
 - alliteration bonus!
 - allow user to stay on the same word? coming up with multiple rhymes could be fun..
     text twist style..
+    well, this would complicate the interface/flow
 - list of words at end of round.
 
 - design idea: use the climber setup, but you need to fill a bar to take a step.
