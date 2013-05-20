@@ -1,5 +1,14 @@
 TASK LIST:
 
+- 1v1 mode: first one to get 100 points wins, but you both choose from the same pool of words. once someone rhymes a word at all, it is removed from the "pool".
+    want to recreate the feeling of the card game Speed
+    FOCUS ON THIS
+    center column of prompt words, one word per row
+    left/right columns are p1/p2 typing space
+    switch rows by pressing number key, type and enter to submit
+    when one player submits a rhyming word, they get the point and the word changes on that row
+    first one to 50 points wins
+
 - need to reverse pitch direction of sounds. better --> higher pitch
 - give sounds AS feedback is given? ie. whenever score goes up, play a sound?
     need huge fx for high bonus levels
