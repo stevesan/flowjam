@@ -10,15 +10,15 @@ function Awake()
 
 function Start()
 {
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeFail" );
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnComboBreak" );
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRoundStart" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeFail" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnComboBreak" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRoundStart" );
 }
 
 private function UpdateText()
 {
-    var comboCount = GameController.instance.GetComboCount();
+    var comboCount = EndlessGame.instance.GetComboCount();
 
     if( comboCount < 2 )
     {

@@ -12,8 +12,8 @@ function Start()
 {
     scoreFlicker.Play();
 
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRoundStart" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRoundStart" );
 }
 
 function OnRoundStart(game:GameObject)
@@ -23,7 +23,7 @@ function OnRoundStart(game:GameObject)
 
 function OnRhymeSuccess(game:GameObject)
 {
-    text.text = 'SCORE: ' + game.GetComponent(GameController).GetScore();
+    text.text = 'SCORE: ' + game.GetComponent(EndlessGame).GetScore();
     text.GetComponent(CameraShake).Play();
 }
 

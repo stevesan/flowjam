@@ -7,7 +7,7 @@ private var proDict:Dictionary.<String, String[]> = null;
 private var validPromptWords:List.<String> = null;
 private var validAnswerWords:HashSet.<String> = null;
 
-static private var sSingleton:RhymeScorer;
+static public var main:RhymeScorer;
 
 static private var VOWEL_PHONEMES = [
         "AA", "AE", "AH", "AO", "AW", "AY",
@@ -24,8 +24,15 @@ private var sylConSet = new HashSet.<String>();
 
 static function Get()
 {
-    return sSingleton;
+    return main;
 }
+
+class ScoreInfo
+{
+    var bonus:int;
+    var score:float;
+};
+
 
 //----------------------------------------
 //  Just adds each word to the word hash set
@@ -287,6 +294,18 @@ function ScoreWords(a:String, b:String)
     return maxScore;
 }
 
+function ScoreWordsWithBonus(a:String, b:String)
+{
+    var raw = ScoreWords(a,b);
+
+    // We adjust the score to reflect the fact that rhyming syllables gets much harder they more you already have
+    // so, map the score to an x^2 curve, sort of..
+    var info = new ScoreInfo();
+    info.bonus = Mathf.Max(0, Mathf.Floor(raw)-1);
+    info.score = raw + info.bonus;
+    return info;
+}
+
 function TestScoreWords(a:String, b:String, expectedScore:float)
 {
     var score = ScoreWords(a, b);
@@ -400,7 +419,7 @@ function ComputePromptEasiness(prompt:String)
 
 function Awake()
 {
-    sSingleton = this;
+    main = this;
 
     //----------------------------------------
     //  Parse database into dictionary

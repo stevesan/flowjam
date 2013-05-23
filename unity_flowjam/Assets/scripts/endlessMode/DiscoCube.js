@@ -9,7 +9,7 @@ function Awake()
 
 function Start()
 {
-    GameController.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
+    EndlessGame.instance.GetComponent(Connectable).AddListener( this.gameObject, "OnRhymeSuccess" );
 }
 
 function OnRhymeSuccess(game:GameObject)

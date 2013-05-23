@@ -8,7 +8,7 @@ static var s_useIntraWordCombos = false;
 //----------------------------------------
 //  Statics
 //----------------------------------------
-static var instance:GameController = null;
+static var instance:EndlessGame = null;
 
 //----------------------------------------
 //  Editor inputs
@@ -31,6 +31,7 @@ var comboBreakSound:AudioClip;
 private var totalScore = 0.0;
 private var comboCount = 0;
 private var answerWord = '';
+private var state = "start";
 
 //----------------------------------------
 //  Animation state
@@ -53,27 +54,14 @@ function Start()
     GetComponent(Connectable).TriggerEvent("OnRoundStart");
 }
 
-class ScoreInfo
-{
-    var bonus:int;
-    var score:float;
-};
-
 private function ScoreWords(a:String, b:String)
 {
-    var raw = RhymeScorer.Get().ScoreWords(a,b);
-
-    // We adjust the score to reflect the fact that rhyming syllables gets much harder they more you already have
-    // so, map the score to an x^2 curve, sort of..
-    var info = new ScoreInfo();
-    info.bonus = Mathf.Floor(raw)-1;
-    info.score = raw + info.bonus;
-    return info;
+    return RhymeScorer.main.ScoreWordsWithBonus(a, b);
 }
 
 private function PresentNewWord()
 {
-    promptDisplay.text = RhymeScorer.Get().GetRandomPromptWord();
+    promptDisplay.text = RhymeScorer.main.GetRandomPromptWord();
     answerWord = '';
     feedbackDisplay.text = 'ENTER A WORD THAT RHYMES!!\nOr blank to skip';
     feedbackDisplay.material.color = Color(1.0, 1.0, 1.0, 1.0);
@@ -87,12 +75,12 @@ private function UpdateAnswerDisplay()
 
 function IsTooSimilar( prompt:String, answer:String )
 {
-    return RhymeScorer.Get().IsTooSimilar(prompt, answer);
+    return RhymeScorer.main.IsTooSimilar(prompt, answer);
 }
 
 private function UpdateAllDisplays()
 {
-    if( RhymeScorer.Get().GetIsWord( answerWord ) )
+    if( RhymeScorer.main.GetIsWord( answerWord ) )
     {
         if( IsTooSimilar( promptDisplay.text, answerWord ) )
         {
@@ -138,7 +126,6 @@ private function UpdateAllDisplays()
     UpdateAnswerDisplay();
 }
 
-
 function Update()
 {
     promptDisplay.transform.position.x = 0.5 - Mathf.Sin(2*Mathf.PI*1.0*Time.time)*0.010;
@@ -167,7 +154,6 @@ function Update()
             var info = ScoreWords( answerWord, promptDisplay.text );
             var score = info.score;
             totalScore += Mathf.Max(1, comboCount)*score;
-
 
             if( score > 0 )
             {
