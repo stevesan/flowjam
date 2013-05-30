@@ -57,7 +57,7 @@ function Update()
             }
             else if( c >= "0"[0] && c <= "9"[0] )
             {
-                // ignore
+                // ignore numbers
             }
             else
             {

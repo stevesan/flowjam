@@ -50,23 +50,29 @@ private function CreateEntry(num:int)
     var entry = new WordEntry();
     entry.pos = GetRandomPosition();
     entry.word = RhymeScorer.main.GetRandomPromptWord();
-    entry.go = Instantiate( wordPrefab, entry.pos, wordPrefab.transform.rotation );
+    entry.go = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
     entry.go.SetActive(true);
-    var t = entry.go.GetComponent(TextMesh);
+
+    var t = entry.go.GetComponent(GUIText);
     t.text = num + ". " + entry.word;
+    t.material.color = Color(0.0, 0.0, 0.8);
 
     return entry;
 }
 
-function Start()
+function OnGameStart()
 {
     for( var i = 0; i < numWords; i++ )
     {
         entries.Add( CreateEntry(i) );
     }
-    wordPrefab.SetActive(false);
 }
 
-function Update () {
+function Update ()
+{
+    for( var entry in entries )
+    {
+        entry.go.transform.position = Utils.WorldToGUIPoint(entry.pos);
+    }
 
 }

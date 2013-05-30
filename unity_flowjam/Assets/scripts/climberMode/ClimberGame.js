@@ -10,12 +10,12 @@ var words:WordSpawner;
 var inputMgr:TextInput;
 var moveTargetPreview:GameObject;
 
-var inputDisplay:TextMesh;
-var inputDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
+var answerDisplay:GUIText;
+var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
 var distancePerScore = 1.0;
 
-private var state = "started";
+private var state = "startscreen";
 private var activeEntry:WordEntry;
 private var previewScore = 0.0;
 private var activeNumber = 0;
@@ -29,6 +29,11 @@ function Start()
 {
     inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnInputEnter");
     inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnInputCharacter");
+    inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnBackspace", "OnInputCharacter");
+
+    gameOverText.material.color = Color(0,0,0.8);
+    stateOut.material.color = Color(0,0,0.8);
+    answerDisplay.material.color = Color(0,0.8,0);
 }
 
 function GetMoveDirection(entry:WordEntry)
@@ -88,7 +93,6 @@ function OnActiveEntryChanged()
     if( activeEntry == null )
         return;
 
-    inputDisplay.transform.position = activeEntry.pos + inputDisplayOffset;
     inputMgr.ClearInput();
     OnInputCharacter();
 }
@@ -96,16 +100,29 @@ function OnActiveEntryChanged()
 function OnGameOver()
 {
     words.OnGameOver();
+    lava.OnGameOver();
 }
 
 function Update ()
 {
     moveTargetPreview.SetActive(false);
     
-    if( state == "started" )
+    if( state == "startscreen" )
     {
-        stateOut.text = "LAVA RISING! To climb, press number, then type rhyming word";
-        stateOut.material.color = Color.blue;
+        gameOverText.text = "LAVA IS RISING! To climb, press a number, then type a rhyming word.\nSPACE BAR TO START";
+        stateOut.text = "";
+        answerDisplay.text = "";
+
+        if( Input.GetKeyDown("space") )
+        {
+            words.OnGameStart();
+            lava.OnGameStart();
+            state = "started";
+        }
+    }
+    else if( state == "started" )
+    {
+        stateOut.text = "HEIGHT: " + climber.transform.position.y.ToString("0.0") + " M";
 
         gameOverText.text = "";
 
@@ -146,7 +163,7 @@ function Update ()
 
             if( activeEntry != null )
             {
-                inputDisplay.text = "{"+inputMgr.GetInput()+"} +" + previewScore.ToString("0.0");
+                answerDisplay.text = "{"+inputMgr.GetInput()+"}\n+" + previewScore.ToString("0.0");
 
                 if( previewScore > 0 )
                 {
@@ -154,9 +171,11 @@ function Update ()
                     moveTargetPreview.SetActive(true);
                     moveTargetPreview.transform.position = GetMoveTarget(activeEntry, previewScore);
                 }
+
+                answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
             }
             else
-                inputDisplay.text = "";
+                answerDisplay.text = "";
         }
     }
     else if( state == "gameover" )
