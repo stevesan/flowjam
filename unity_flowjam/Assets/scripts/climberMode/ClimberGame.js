@@ -5,16 +5,18 @@ static var main:ClimberGame;
 var lava:Lava;
 var climber:ClimberGuy;
 var stateOut:GUIText;
-var gameOverText:GUIText;
+var centerText:GUIText;
 var words:WordSpawner;
 var inputMgr:TextInput;
 var moveTargetPreview:GameObject;
 
-var answerDisplay:GUIText;
+var answerDisplayPrefab:GameObject;
+var answerDisplayColor = Color.red;
 var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
 var distancePerScore = 1.0;
 
+private var answerDisplay:GUIText;
 private var state = "startscreen";
 private var activeEntry:WordEntry;
 private var previewScore = 0.0;
@@ -27,13 +29,20 @@ function Awake()
 
 function Start()
 {
-    inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnInputEnter");
-    inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnInputCharacter");
-    inputMgr.GetComponent(Connectable).AddListener(this.gameObject, "OnBackspace", "OnInputCharacter");
+    var inputEvents = inputMgr.GetComponent(Connectable);
+    inputEvents.AddListener(this.gameObject, "OnInputEnter");
+    inputEvents.AddListener(this.gameObject, "OnInputCharacter");
+    inputEvents.AddListener(this.gameObject, "OnBackspace", "OnInputCharacter");
 
-    gameOverText.material.color = Color(0,0,0.8);
-    stateOut.material.color = Color(0,0,0.8);
-    answerDisplay.material.color = Color(0,0.8,0);
+    centerText.material.color = Color(1,0.5f,0);
+    stateOut.material.color = Color(1,1,1);
+
+    var answerDisplayObject = Instantiate( answerDisplayPrefab, Vector3.zero, answerDisplayPrefab.transform.rotation );
+    answerDisplayObject.SetActive(true);
+    answerDisplayPrefab.SetActive(false);
+
+    answerDisplay = answerDisplayObject.GetComponent(GUIText);
+    answerDisplay.material.color = answerDisplayColor;
 }
 
 function GetMoveDirection(entry:WordEntry)
@@ -50,6 +59,11 @@ function GetMoveDistance(score:float)
 function GetMoveTarget(entry, score)
 {
     return climber.transform.position + GetMoveDirection(entry) * GetMoveDistance(score);
+}
+
+function GetIsPlaying()
+{
+    return state == "started";
 }
 
 function OnInputEnter()
@@ -84,8 +98,7 @@ function OnInputCharacter()
 
 function OnHitKillZone()
 {
-    state = "gameover";
-    OnGameOver();
+    TriggerGameOver();
 }
 
 function OnActiveEntryChanged()
@@ -97,10 +110,33 @@ function OnActiveEntryChanged()
     OnInputCharacter();
 }
 
-function OnGameOver()
+function TriggerGameOver()
 {
-    words.OnGameOver();
-    lava.OnGameOver();
+    if( state == "started" )
+    {
+        words.OnGameOver();
+        lava.OnGameOver();
+        ClimberGuy.main.OnGameOver();
+        state = "gameover";
+    }
+}
+
+function TriggerGameStart()
+{
+    if( state == "gameover" || state == "startscreen" )
+    {
+        activeEntry = null;
+        activeNumber = -1;
+        words.OnGameStart();
+        lava.OnGameStart();
+        ClimberGuy.main.OnGameStart();
+        state = "started";
+    }
+}
+
+function UpdateHeightText()
+{
+    stateOut.text = "HEIGHT: " + climber.transform.position.y.ToString("0.0") + " M";
 }
 
 function Update ()
@@ -109,27 +145,22 @@ function Update ()
     
     if( state == "startscreen" )
     {
-        gameOverText.text = "LAVA IS RISING! To climb, press a number, then type a rhyming word.\nSPACE BAR TO START";
+        centerText.text = "LAVA IS RISING! To climb, press a number, then type a rhyming word.\nSPACE BAR TO START";
         stateOut.text = "";
         answerDisplay.text = "";
 
         if( Input.GetKeyDown("space") )
-        {
-            words.OnGameStart();
-            lava.OnGameStart();
-            state = "started";
-        }
+            TriggerGameStart();
     }
     else if( state == "started" )
     {
-        stateOut.text = "HEIGHT: " + climber.transform.position.y.ToString("0.0") + " M";
+        UpdateHeightText();
 
-        gameOverText.text = "";
+        centerText.text = "";
 
         if( lava.transform.position.y >= climber.transform.position.y )
         {
-            state = "gameover";
-            OnGameOver();
+            TriggerGameOver();
         }
         else
         {
@@ -180,10 +211,13 @@ function Update ()
     }
     else if( state == "gameover" )
     {
-        stateOut.text = "Game over man!";
-        stateOut.material.color = Color.blue;
+        UpdateHeightText();
+        centerText.text = "GAME OVER! Reached " + climber.transform.position.y.ToString("0.0") + " meters!";
+        centerText.text += "\nSpace bar to try again";
+        answerDisplay.text = "";
 
-        gameOverText.text = "GAME OVER! Reached " + climber.transform.position.y.ToString("0.0") + " meters!";
+        if( Input.GetKeyDown("space") )
+            TriggerGameStart();
     }
 
 }

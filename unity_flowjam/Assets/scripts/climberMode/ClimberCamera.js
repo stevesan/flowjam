@@ -1,15 +1,13 @@
 #pragma strict
 
-var climber:Transform;
-
 var yOffset = 5.0f;
 
 function Start () {
 
 }
 
-function Update () {
+function LateUpdate () {
 
-    transform.position.y = climber.position.y + yOffset;
+    transform.position.y = ClimberGuy.main.transform.position.y + yOffset;
 
 }

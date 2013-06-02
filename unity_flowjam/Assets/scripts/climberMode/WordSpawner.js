@@ -4,8 +4,7 @@ var wordPrefab:GameObject;
 
 var width = 20.0;
 var height = 20.0;
-var numWords = 5;
-var climber:ClimberGuy;
+var wordColor = Color.white;
 
 class WordEntry
 {
@@ -21,7 +20,7 @@ private function GetRandomPosition()
     var d = Vector3(-width/2.0, 0.0);
     d.x += Random.value * width;
     d.y += Random.value * height;
-    return climber.transform.position + d;
+    return ClimberGuy.main.transform.position + d;
 }
 
 function GetEntry(num:int)
@@ -38,11 +37,6 @@ function ReplaceEntry(num:int)
 
 function OnGameOver()
 {
-    for( var i = 0; i < numWords; i++ )
-    {
-        Destroy(entries[i].go);
-        entries[i] = null;
-    }
 }
 
 private function CreateEntry(num:int)
@@ -52,17 +46,30 @@ private function CreateEntry(num:int)
     entry.word = RhymeScorer.main.GetRandomPromptWord();
     entry.go = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
     entry.go.SetActive(true);
+    wordPrefab.SetActive(false);
 
     var t = entry.go.GetComponent(GUIText);
     t.text = num + ". " + entry.word;
-    t.material.color = Color(0.0, 0.0, 0.8);
+    t.material.color = wordColor;
 
     return entry;
 }
 
+function DestroyEntries()
+{
+    for( var i = 0; i < entries.Count; i++ )
+    {
+        Destroy(entries[i].go);
+    }
+
+    entries.Clear();
+}
+
 function OnGameStart()
 {
-    for( var i = 0; i < numWords; i++ )
+    DestroyEntries();
+
+    for( var i = 0; i < 10; i++ )
     {
         entries.Add( CreateEntry(i) );
     }
@@ -70,9 +77,11 @@ function OnGameStart()
 
 function Update ()
 {
+    // Make sure words move, to stay in the same world position
     for( var entry in entries )
     {
-        entry.go.transform.position = Utils.WorldToGUIPoint(entry.pos);
+        if( entry != null )
+            entry.go.transform.position = Utils.WorldToGUIPoint(entry.pos);
     }
 
 }
