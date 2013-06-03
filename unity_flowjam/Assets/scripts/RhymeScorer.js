@@ -31,6 +31,7 @@ class ScoreInfo
 {
     var bonus:int;
     var score:float;
+    var raw:float;
 };
 
 
@@ -303,6 +304,7 @@ function ScoreWordsWithBonus(a:String, b:String)
     var info = new ScoreInfo();
     info.bonus = Mathf.Max(0, Mathf.Floor(raw)-1);
     info.score = raw + info.bonus;
+    info.raw = raw;
     return info;
 }
 

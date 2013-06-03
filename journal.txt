@@ -1,6 +1,27 @@
 TASK LIST:
 
-- 1v1 mode: first one to get 100 points wins, but you both choose from the same pool of words. once someone rhymes a word at all, it is removed from the "pool".
+- don't drop when they hit enter - flash the error instead
+
+ways to make more challenging:
+
+    * have some cells REQUIRE 2-syls? like spelltower's numbered cells!!!
+        this alleviates the "single-syllable cheap climb" problem
+    * disallow reusing same words, like Spelltower.
+        this creates the "1st & goal" effect
+    * jump two cells for 2-syl rhymes?
+
+
+- "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
+    most like Spelltower's puzzle mode
+
+- "climb" vs mode, could be turn-based hot-seat: like relax mode, start on opposite ends of wall, goal is to get most points
+    dynamics: trap the other player
+    could be turn-based or real time!
+
+- "action" mode: lava, grip, rocks, hazards, etc. Goal is to get to the top. Also track high score
+    past a certain height, words will NOT respawn
+
+- "speed" vs mode: first one to get 100 points wins, but you both choose from the same pool of words. once someone rhymes a word at all, it is removed from the "pool".
     want to recreate the feeling of the card game Speed
     FOCUS ON THIS
     center column of prompt words, one word per row
