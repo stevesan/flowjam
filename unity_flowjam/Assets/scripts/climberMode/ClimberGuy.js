@@ -7,6 +7,7 @@ var initRow = 3;
 var initCol = 5;
 var defaultGripSecs = 5.0;
 var gripSecsDisplayPrefab:GameObject;
+var gripSecsDisplayOffset = Vector3(0, -0.01, 0);
 
 private var origPos:Vector3;
 private var moveStartPos:Vector3;
@@ -118,7 +119,7 @@ function Update()
         }
 
         gripSecsDisplay.GetComponent(GUIText).text = gripSecs.ToString("0.0");
-        gripSecsDisplay.transform.position = Utils.WorldToGUIPoint(transform.position);
+        gripSecsDisplay.transform.position = Utils.WorldToGUIPoint(transform.position) + gripSecsDisplayOffset;
     }
     else
     {

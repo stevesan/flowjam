@@ -32,19 +32,12 @@ function OnPlayerDie()
 
 function OnPlayerMove()
 {
-    var clip = null;
+    var index = Mathf.Clamp(
+            Mathf.Ceil( ClimberGame.main.GetLastScore() ) -1,
+            0, moveClips.length-1 );
+    var clip = moveClips[ index ];
 
-    for( var i = 0; i < moveClips.length; i++ )
-    {
-        if( i >= 1 && ClimberGame.main.GetLastScore() <= i )
-        {
-            break;
-        }
-        clip = moveClips[i];
-    }
-
-    if( clip != null )
-        AudioSource.PlayClipAtPoint( clip, ClimberGuy.main.transform.position );
+    AudioSource.PlayClipAtPoint( clip, ClimberGuy.main.transform.position );
 }
 
 function Update () {

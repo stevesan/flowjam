@@ -68,6 +68,8 @@ function SetActiveEntry(entry:WordEntry)
 
 function GetLastScore() { return activeScore; }
 
+function GetGripBonus() { return Mathf.Max( 0, 2 * (activeScore-1) ); }
+
 function MovePlayer( i:int, j:int, gripBonus:float )
 {
     var climber = ClimberGuy.main;
@@ -92,7 +94,7 @@ function OnInputEnter()
 
     if( activeScore > 0.0 )
     {
-        MovePlayer( activeNbor.i, activeNbor.j, activeScore-1 );
+        MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
         GetComponent(Connectable).TriggerEvent("OnPlayerMove");
     }
     else
@@ -129,16 +131,12 @@ function OnInputCharacter()
 
         if( activeScore == 0 )
             feedbackMsg = "Doesn't rhyme";
-        else if( activeScore <= 1 )
-            feedbackMsg = "OK";
-        else if( activeScore <= 2 )
-            feedbackMsg = "GOOD +" + (activeScore-1);
-        else if( activeScore <= 3 )
-            feedbackMsg = "GREAT +" + (activeScore-1);
-        else if( activeScore <= 4 )
-            feedbackMsg = "AMAZING +" + (activeScore-1);
         else
-            feedbackMsg = "IMPOSSIBLE +" + (activeScore-1);
+        {
+            var kudos = [ "OK", "Good", "Great", "Amazing", "Impossible" ];
+
+            feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + GetGripBonus();
+        }
     }
 }
 
