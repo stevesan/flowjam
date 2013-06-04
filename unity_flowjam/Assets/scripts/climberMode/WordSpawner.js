@@ -42,6 +42,11 @@ function ReplaceEntry( i:int, j:int )
     entries[i,j] = CreateEntry(wsPos);
 }
 
+function GetEntry( i:int, j:int )
+{
+    return entries[i,j];
+}
+
 private function CreateEntry(wsPos:Vector3)
 {
     var entry = new WordEntry();

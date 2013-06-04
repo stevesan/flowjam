@@ -1,4 +1,5 @@
 #pragma strict
+import SteveSharp;
 
 static var main:ClimberGame;
 
@@ -13,12 +14,11 @@ var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
 var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
-var distancePerScore = 1.0;
-
 private var answerDisplay:GUIText;
 private var state = "startscreen";
 private var activeEntry:WordEntry;
-private var previewScore = 0.0;
+private var activeNbor:Int2;
+private var activeScore = 0.0;
 private var feedbackMsg = "";
 
 function Awake()
@@ -33,7 +33,7 @@ function Start()
     inputEvents.AddListener(this.gameObject, "OnInputCharacter");
     inputEvents.AddListener(this.gameObject, "OnBackspace", "OnInputCharacter");
 
-    centerText.material.color = Color(1,0.5f,0);
+    centerText.material.color = Color(1,1,0);
     stateOut.material.color = Color(1,1,1);
 
     var answerDisplayObject = Utils.SpawnFromPrefab( answerDisplayPrefab );
@@ -49,27 +49,53 @@ function GetIsPlaying()
     return state == "started";
 }
 
+function SetActiveEntry(entry:WordEntry)
+{
+    if( activeEntry != entry )
+    {
+        if( activeEntry != null )
+            activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
+
+        activeEntry = entry;
+
+        inputMgr.ClearInput();
+        OnInputCharacter();
+
+        if( activeEntry != null )
+            activeEntry.object.GetComponent(GUIText).material.color = Color.white;
+    }
+}
+
+function MovePlayer( i:int, j:int, gripBonus:float )
+{
+    var climber = ClimberGuy.main;
+
+    // spawn a new word where we used to be
+    words.ReplaceEntry( climber.GetRow(), climber.GetCol() );
+
+    // Destroy word at move target
+    words.DestroyEntry( i, j );
+
+    // Move the climber!
+    climber.MoveTo( i, j, gripBonus, false );
+
+    // Reset input
+    SetActiveEntry(null);
+}
+
 function OnInputEnter()
 {
-    /*
     if( activeEntry == null )
         return;
 
-    var input = inputMgr.GetInput();
-    var word = activeEntry.word;
-
-    if( input == "" )
-    var score = RhymeScorer.main.ScoreWords( input, word );
-
-    if( score > 0.0 )
+    if( activeScore > 0.0 )
     {
-        // move the guy!
-        climber.DoMove( GetMoveDirection(activeEntry), GetMoveDistance(score.score) );
-        activeEntry = null;
-        inputMgr.ClearInput();
-        words.ReplaceEntry(activeNumber);
+        MovePlayer( activeNbor.i, activeNbor.j, activeScore-1 );
     }
-    */
+    else
+    {
+        // play error sound, flash feedback msg
+    }
 }
 
 function OnInputCharacter()
@@ -80,10 +106,37 @@ function OnInputCharacter()
     var input = inputMgr.GetInput();
     var word = activeEntry.word;
 
-    /*
-    var score = RhymeScorer.main.ScoreWords( input, word );
-    previewScore = score.score;
-    */
+    activeScore = 0;
+
+    if( input == "" )
+    {
+        feedbackMsg = "TYPE!";
+    }
+    else if( !RhymeScorer.main.GetIsWord(input) )
+    {
+        feedbackMsg = "Not a word";
+    }
+    else if( RhymeScorer.main.IsTooSimilar( input, word ) )
+    {
+        feedbackMsg = "Too similar";
+    }
+    else
+    {
+        activeScore = RhymeScorer.main.ScoreWords( input, word );
+
+        if( activeScore == 0 )
+            feedbackMsg = "Doesn't rhyme";
+        else if( activeScore <= 1 )
+            feedbackMsg = "OK";
+        else if( activeScore <= 2 )
+            feedbackMsg = "GOOD +" + (activeScore-1);
+        else if( activeScore <= 3 )
+            feedbackMsg = "GREAT +" + (activeScore-1);
+        else if( activeScore <= 4 )
+            feedbackMsg = "AMAZING +" + (activeScore-1);
+        else
+            feedbackMsg = "IMPOSSIBLE +" + (activeScore-1);
+    }
 }
 
 function OnHitKillZone()
@@ -91,19 +144,12 @@ function OnHitKillZone()
     TriggerGameOver();
 }
 
-function OnActiveEntryChanged()
-{
-    if( activeEntry == null )
-        return;
-
-    inputMgr.ClearInput();
-    OnInputCharacter();
-}
-
 function TriggerGameOver()
 {
     if( state == "started" )
     {
+        GetComponent(Connectable).TriggerEvent("OnPlayerDie");
+
         words.OnGameOver();
         lava.OnGameOver();
         ClimberGuy.main.OnGameOver();
@@ -115,7 +161,7 @@ function TriggerGameStart()
 {
     if( state == "gameover" || state == "startscreen" )
     {
-        activeEntry = null;
+        SetActiveEntry(null);
         words.OnGameStart();
         lava.OnGameStart();
         ClimberGuy.main.OnGameStart();
@@ -163,29 +209,27 @@ function Update ()
             {
                 if( Input.GetKeyDown((nborNum+1)+"") )
                 {
-                    // TEMP
-                    var nbor = HexTiler.GetNbor( GetPlayer().GetRow(), GetPlayer().GetCol(), nborNum );
-                    GetPlayer().MoveTo( nbor.i, nbor.j, 1.0, false );
+                    activeNbor = HexTiler.GetNbor( GetPlayer().GetRow(), GetPlayer().GetCol(), nborNum );
+                    SetActiveEntry( words.GetEntry( activeNbor.i, activeNbor.j ) );
                 }
-
-                /*
-                //----------------------------------------
-                //  Kill words that are below the player
-                //----------------------------------------
-                if( entry != activeEntry && entry.pos.y < climber.transform.position.y )
-                {
-                    words.ReplaceEntry(num);
-                }
-                */
             }
 
             if( activeEntry != null )
             {
-                answerDisplay.text = "{"+inputMgr.GetInput()+"}\n+" + previewScore.ToString("0.0");
+                answerDisplay.text = inputMgr.GetInput()+"_\n" + feedbackMsg;
                 answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
             }
             else
                 answerDisplay.text = "";
+
+            //----------------------------------------
+            //  Check for drop
+            //----------------------------------------
+            if( climber.GetGripSecs() < 0 )
+            {
+                MovePlayer( climber.GetRow()-2, climber.GetCol(), 0 );
+                GetComponent(Connectable).TriggerEvent("OnPlayerDrop");
+            }
         }
     }
     else if( state == "gameover" )

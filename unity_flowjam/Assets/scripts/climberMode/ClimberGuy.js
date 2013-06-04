@@ -28,6 +28,11 @@ function GetHexes()
     return ClimberGrid.mainTiler;
 }
 
+function GetGripSecs()
+{
+    return gripSecs;
+}
+
 function Awake()
 {
     Utils.Assert(main == null);
