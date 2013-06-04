@@ -9,6 +9,7 @@ ways to make more challenging:
     * disallow reusing same words, like Spelltower.
         this creates the "1st & goal" effect
     * jump two cells for 2-syl rhymes?
+    * time-trials - get to the top ASAP
 
 
 - "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
