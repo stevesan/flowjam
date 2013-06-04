@@ -53,7 +53,7 @@ function SetActiveEntry(entry:WordEntry)
 {
     if( activeEntry != entry )
     {
-        if( activeEntry != null )
+        if( activeEntry != null && activeEntry.object != null )
             activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
 
         activeEntry = entry;
@@ -61,10 +61,12 @@ function SetActiveEntry(entry:WordEntry)
         inputMgr.ClearInput();
         OnInputCharacter();
 
-        if( activeEntry != null )
+        if( activeEntry != null && activeEntry.object != null )
             activeEntry.object.GetComponent(GUIText).material.color = Color.white;
     }
 }
+
+function GetLastScore() { return activeScore; }
 
 function MovePlayer( i:int, j:int, gripBonus:float )
 {
@@ -91,6 +93,7 @@ function OnInputEnter()
     if( activeScore > 0.0 )
     {
         MovePlayer( activeNbor.i, activeNbor.j, activeScore-1 );
+        GetComponent(Connectable).TriggerEvent("OnPlayerMove");
     }
     else
     {
@@ -150,6 +153,7 @@ function TriggerGameOver()
     {
         GetComponent(Connectable).TriggerEvent("OnPlayerDie");
 
+        SetActiveEntry(null);
         words.OnGameOver();
         lava.OnGameOver();
         ClimberGuy.main.OnGameOver();
