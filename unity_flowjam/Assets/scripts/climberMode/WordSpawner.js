@@ -10,78 +10,80 @@ class WordEntry
 {
     var word:String;
     var pos:Vector3;
-    var go:GameObject;
+    var object:GameObject;
 }
 
-private var entries = new List.<WordEntry>();
+private var entries = new Grid.<WordEntry>();
 
-private function GetRandomPosition()
+function DestroyEntry( i:int, j:int )
 {
-    var d = Vector3(-width/2.0, 0.0);
-    d.x += Random.value * width;
-    d.y += Random.value * height;
-    return ClimberGuy.main.transform.position + d;
-}
-
-function GetEntry(num:int)
-{
-    return entries[num];
-}
-
-function ReplaceEntry(num:int)
-{
-    // replace entry
-    Destroy(entries[num].go);
-    entries[num] = CreateEntry(num);
-}
-
-function OnGameOver()
-{
-}
-
-private function CreateEntry(num:int)
-{
-    var entry = new WordEntry();
-    entry.pos = GetRandomPosition();
-    entry.word = RhymeScorer.main.GetRandomPromptWord();
-    entry.go = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
-    entry.go.SetActive(true);
-    wordPrefab.SetActive(false);
-
-    var t = entry.go.GetComponent(GUIText);
-    t.text = num + ". " + entry.word;
-    t.material.color = wordColor;
-
-    return entry;
-}
-
-function DestroyEntries()
-{
-    for( var i = 0; i < entries.Count; i++ )
+    if( entries[i,j] != null )
     {
-        Destroy(entries[i].go);
+        Destroy( entries[i,j].object );
+        entries[i,j] = null;
+    }
+}
+
+function ClearEntries()
+{
+    for( var i = 0; i < entries.GetCount(); i++ )
+    {
+        if( entries[i] != null )
+            Destroy(entries[i].object);
     }
 
     entries.Clear();
 }
 
+function ReplaceEntry( i:int, j:int )
+{
+    DestroyEntry( i, j );
+    var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( i, j );
+    entries[i,j] = CreateEntry(wsPos);
+}
+
+private function CreateEntry(wsPos:Vector3)
+{
+    var entry = new WordEntry();
+    entry.pos = wsPos;
+    entry.word = RhymeScorer.main.GetRandomPromptWord();
+    entry.object = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
+    entry.object.SetActive(true);
+    wordPrefab.SetActive(false);
+
+    var t = entry.object.GetComponent(GUIText);
+    t.text = entry.word;
+    t.material.color = wordColor;
+
+    return entry;
+}
+
 function OnGameStart()
 {
-    DestroyEntries();
+    ClearEntries();
 
-    for( var i = 0; i < 10; i++ )
-    {
-        entries.Add( CreateEntry(i) );
-    }
+    var grid = ClimberGrid.mainTiler;
+    entries.Resize( grid.numRows, grid.numCols, null );
+
+    for( var i = 0; i < grid.numRows; i++ )
+        for( var j = 0; j < grid.numCols; j++ )
+            ReplaceEntry( i, j );
+}
+
+function OnGameOver()
+{
+    ClearEntries();
 }
 
 function Update ()
 {
     // Make sure words move, to stay in the same world position
-    for( var entry in entries )
+    for( var i = 0; i < entries.GetCount(); i++ )
     {
+        var entry = entries[i];
+
         if( entry != null )
-            entry.go.transform.position = Utils.WorldToGUIPoint(entry.pos);
+            entry.object.transform.position = Utils.WorldToGUIPoint(entry.pos);
     }
 
 }

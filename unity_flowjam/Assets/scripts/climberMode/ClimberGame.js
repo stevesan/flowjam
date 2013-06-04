@@ -8,7 +8,6 @@ var stateOut:GUIText;
 var centerText:GUIText;
 var words:WordSpawner;
 var inputMgr:TextInput;
-var moveTargetPreview:GameObject;
 
 var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
@@ -20,7 +19,7 @@ private var answerDisplay:GUIText;
 private var state = "startscreen";
 private var activeEntry:WordEntry;
 private var previewScore = 0.0;
-private var activeNumber = 0;
+private var feedbackMsg = "";
 
 function Awake()
 {
@@ -37,28 +36,12 @@ function Start()
     centerText.material.color = Color(1,0.5f,0);
     stateOut.material.color = Color(1,1,1);
 
-    var answerDisplayObject = Instantiate( answerDisplayPrefab, Vector3.zero, answerDisplayPrefab.transform.rotation );
+    var answerDisplayObject = Utils.SpawnFromPrefab( answerDisplayPrefab );
     answerDisplayObject.SetActive(true);
     answerDisplayPrefab.SetActive(false);
 
     answerDisplay = answerDisplayObject.GetComponent(GUIText);
     answerDisplay.material.color = answerDisplayColor;
-}
-
-function GetMoveDirection(entry:WordEntry)
-{
-    var dir = (entry.pos - climber.transform.position).normalized;
-    return dir;
-}
-
-function GetMoveDistance(score:float)
-{
-    return score * distancePerScore;
-}
-
-function GetMoveTarget(entry, score)
-{
-    return climber.transform.position + GetMoveDirection(entry) * GetMoveDistance(score);
 }
 
 function GetIsPlaying()
@@ -68,14 +51,17 @@ function GetIsPlaying()
 
 function OnInputEnter()
 {
+    /*
     if( activeEntry == null )
         return;
 
     var input = inputMgr.GetInput();
     var word = activeEntry.word;
-    var score = RhymeScorer.main.ScoreWordsWithBonus( input, word );
 
-    if( score.score > 0.0 )
+    if( input == "" )
+    var score = RhymeScorer.main.ScoreWords( input, word );
+
+    if( score > 0.0 )
     {
         // move the guy!
         climber.DoMove( GetMoveDirection(activeEntry), GetMoveDistance(score.score) );
@@ -83,6 +69,7 @@ function OnInputEnter()
         inputMgr.ClearInput();
         words.ReplaceEntry(activeNumber);
     }
+    */
 }
 
 function OnInputCharacter()
@@ -92,8 +79,11 @@ function OnInputCharacter()
 
     var input = inputMgr.GetInput();
     var word = activeEntry.word;
-    var score = RhymeScorer.main.ScoreWordsWithBonus( input, word );
+
+    /*
+    var score = RhymeScorer.main.ScoreWords( input, word );
     previewScore = score.score;
+    */
 }
 
 function OnHitKillZone()
@@ -126,11 +116,11 @@ function TriggerGameStart()
     if( state == "gameover" || state == "startscreen" )
     {
         activeEntry = null;
-        activeNumber = -1;
         words.OnGameStart();
         lava.OnGameStart();
         ClimberGuy.main.OnGameStart();
         state = "started";
+        words.DestroyEntry( ClimberGuy.main.GetRow(), ClimberGuy.main.GetCol() );
     }
 }
 
@@ -139,13 +129,16 @@ function UpdateHeightText()
     stateOut.text = "HEIGHT: " + climber.transform.position.y.ToString("0.0") + " M";
 }
 
+function GetPlayer()
+{
+    return ClimberGuy.main;
+}
+
 function Update ()
 {
-    moveTargetPreview.SetActive(false);
-    
     if( state == "startscreen" )
     {
-        centerText.text = "LAVA IS RISING! To climb, press a number, then type a rhyming word.\nSPACE BAR TO START";
+        centerText.text = "LAVA IS RISING!\nTo climb, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.\nSPACE BAR TO START";
         stateOut.text = "";
         answerDisplay.text = "";
 
@@ -155,7 +148,6 @@ function Update ()
     else if( state == "started" )
     {
         UpdateHeightText();
-
         centerText.text = "";
 
         if( lava.transform.position.y >= climber.transform.position.y )
@@ -164,25 +156,19 @@ function Update ()
         }
         else
         {
-
             //----------------------------------------
             //  
             //----------------------------------------
-            for( var num = 0; num < 10; num++ )
+            for( var nborNum = 0; nborNum < 6; nborNum++ )
             {
-                var entry = words.GetEntry(num);
-
-                // user selecting this word?
-                if( Input.GetKeyDown(num+"") )
+                if( Input.GetKeyDown((nborNum+1)+"") )
                 {
-                    if( entry != activeEntry )
-                    {
-                        activeEntry = entry;
-                        activeNumber = num;
-                        OnActiveEntryChanged();
-                    }
+                    // TEMP
+                    var nbor = HexTiler.GetNbor( GetPlayer().GetRow(), GetPlayer().GetCol(), nborNum );
+                    GetPlayer().MoveTo( nbor.i, nbor.j, 1.0, false );
                 }
 
+                /*
                 //----------------------------------------
                 //  Kill words that are below the player
                 //----------------------------------------
@@ -190,19 +176,12 @@ function Update ()
                 {
                     words.ReplaceEntry(num);
                 }
+                */
             }
 
             if( activeEntry != null )
             {
                 answerDisplay.text = "{"+inputMgr.GetInput()+"}\n+" + previewScore.ToString("0.0");
-
-                if( previewScore > 0 )
-                {
-                    // show target preview
-                    moveTargetPreview.SetActive(true);
-                    moveTargetPreview.transform.position = GetMoveTarget(activeEntry, previewScore);
-                }
-
                 answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
             }
             else
