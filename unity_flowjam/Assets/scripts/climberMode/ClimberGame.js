@@ -29,13 +29,14 @@ private class GameMode
     public function OnPlayerMove(game:ClimberGame) { }
     public function GetShouldReplaceWords() { return true; }
     public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
+    public function GetGameOverText(game:ClimberGame) { return "Game over!"; }
 }
 
 private class ActionGameMode extends GameMode
 {
     public function GetHelpText()
     {
-        return "LAVA IS RISING!\nTo move, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.\nSPACE BAR TO START";
+        return "LAVA IS RISING!\nTo move, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.";
     }
 
     public function Start(game:ClimberGame)
@@ -46,7 +47,7 @@ private class ActionGameMode extends GameMode
 
     public function Update(game:ClimberGame)
     {
-        game.UpdateHeightText();
+        game.stateOut.text = "HEIGHT: " + game.climber.transform.position.y.ToString("0.0") + " M";
         game.centerText.text = "";
 
         if( game.lava.transform.position.y >= game.climber.transform.position.y )
@@ -67,6 +68,74 @@ private class ActionGameMode extends GameMode
     }
 
     public function GetScore(game:ClimberGame) { return game.GetGripBonus(); }
+
+    public function GetGameOverText(game:ClimberGame)
+    {
+        return "GAME OVER! Reached " + game.climber.transform.position.y.ToString("0.0") + " meters";
+    }
+}
+
+private class RaceGameMode extends GameMode
+{
+    private var elapsedTime = 0.0;
+    private var startHeight = 0.0;
+    private var goalHeight = 30.0;
+    private var newRecord = false;
+
+    public function GetHelpText()
+    {
+        return "To move, press a number and type a rhyming word.\nReach "+goalHeight+" M as fast as possible!";
+    }
+
+    public function Start(game:ClimberGame)
+    {
+        game.words.Reset(999, 999);
+        game.climber.SetShowGripSecs(false);
+        ClimberCamera.main.SetFollow(true);
+        game.lava.Disable();
+        elapsedTime = 0.0;
+        startHeight = game.climber.transform.position.y;
+        newRecord = false;
+    }
+
+    public function GetTime()
+    {
+        return elapsedTime;
+    }
+
+    public function GetBestTime()
+    {
+        return PlayerPrefs.GetFloat("bestRaceTime", 999.0);
+    }
+
+    public function Update(game:ClimberGame)
+    {
+        elapsedTime += Time.deltaTime;
+
+        var ht = game.climber.transform.position.y - startHeight;
+        game.stateOut.text = "HEIGHT: " + ht.ToString("0.0") + " / "+goalHeight+" M\n";
+        game.stateOut.text += "TIME: " + GetTime().ToString("0.00") + " / " + GetBestTime().ToString("0.00") + " S\n";
+        game.centerText.text = "";
+
+        if( ht > goalHeight )
+        {
+            game.TriggerGameOver();
+            if( GetTime() < GetBestTime() )
+            {
+                newRecord = true;
+                PlayerPrefs.SetFloat("bestRaceTime", GetTime());
+            }
+        }
+    }
+
+    public function GetScore(game:ClimberGame) { return game.GetGripBonus(); }
+
+    public function GetGameOverText(game:ClimberGame)
+    {
+        return "FINISHED!\nTIME: " + GetTime().ToString("0.00") + " seconds\n"+
+            "BEST TIME: " + PlayerPrefs.GetFloat("bestRaceTime", 999.0).ToString("0.00")
+            + (newRecord ? "\nNEW RECORD :D :D :D" : "");
+    }
 }
 
 private class RelaxGameMode extends GameMode
@@ -75,7 +144,7 @@ private class RelaxGameMode extends GameMode
 
     public function GetHelpText()
     {
-        return "To move, press a number and type a rhyming word.\nBetter rhymes get more points\nSPACE BAR TO START";
+        return "To move, press a number and type a rhyming word.\nBetter rhymes get more points";
     }
 
     public function Start(game:ClimberGame)
@@ -259,11 +328,6 @@ function StartPlaying()
     }
 }
 
-function UpdateHeightText()
-{
-    stateOut.text = "HEIGHT: " + climber.transform.position.y.ToString("0.0") + " M";
-}
-
 function GetPlayer()
 {
     return ClimberGuy.main;
@@ -289,9 +353,12 @@ function Update()
             gameMode = new ActionGameMode();
             state = "helpscreen";
         }
-        /*
         else if( Input.GetKeyDown("3") )
-            state = "raceStartscreen";
+        {
+            gameMode = new RaceGameMode();
+            state = "helpscreen";
+        }
+        /*
         else if( Input.GetKeyDown("4") )
             state = "versusStartscreen";
             */
@@ -303,7 +370,7 @@ function Update()
     {
         stateOut.text = "";
         answerDisplay.text = "";
-        centerText.text = gameMode.GetHelpText();
+        centerText.text = gameMode.GetHelpText() + "\n\nSPACE BAR TO START";
 
         if( Input.GetKeyDown("space") )
             StartPlaying();
@@ -331,9 +398,9 @@ function Update()
     }
     else if( state == "gameover" )
     {
-        UpdateHeightText();
-        centerText.text = "GAME OVER! Reached " + climber.transform.position.y.ToString("0.0") + " meters!";
-        centerText.text += "\nSpace bar to try again";
+        stateOut.text = "";
+        centerText.text = gameMode.GetGameOverText(this);
+        centerText.text += "\n\nSPACE BAR TO RESTART";
         answerDisplay.text = "";
 
         if( Input.GetKeyDown("space") )
