@@ -18,6 +18,7 @@ private var answerDisplay:GUIText;
 private var state = "startscreen";
 private var activeEntry:WordEntry;
 private var activeNbor:Int2;
+private var activeNborNum = -1;
 private var activeScore = 0.0;
 private var feedbackMsg = "";
 
@@ -30,6 +31,7 @@ private class GameMode
     public function GetShouldReplaceWords() { return true; }
     public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
     public function GetGameOverText(game:ClimberGame) { return "Game over!"; }
+    public function GetIsDoubleMove(game:ClimberGame) { return false; }
 }
 
 private class ActionGameMode extends GameMode
@@ -128,13 +130,18 @@ private class RaceGameMode extends GameMode
         }
     }
 
-    public function GetScore(game:ClimberGame) { return game.GetGripBonus(); }
+    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
 
     public function GetGameOverText(game:ClimberGame)
     {
         return "FINISHED!\nTIME: " + GetTime().ToString("0.00") + " seconds\n"+
             "BEST TIME: " + PlayerPrefs.GetFloat("bestRaceTime", 999.0).ToString("0.00")
             + (newRecord ? "\nNEW RECORD :D :D :D" : "");
+    }
+
+    public function GetIsDoubleMove(game:ClimberGame)
+    {
+        return game.GetLastScore() >= 2.0;
     }
 }
 
@@ -249,7 +256,16 @@ function OnInputEnter()
 
     if( activeScore > 0.0 )
     {
-        MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
+        var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
+
+        if( gameMode.GetIsDoubleMove(this) && ClimberGrid.mainTiler.GetTiles().GetInRange(doubleNbor) )
+        {
+            MovePlayer( doubleNbor.i, doubleNbor.j, GetGripBonus() );
+        }
+        else
+        {
+            MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
+        }
         GetComponent(Connectable).TriggerEvent("OnPlayerMove");
         gameMode.OnPlayerMove( this );
     }
@@ -381,6 +397,7 @@ function Update()
         {
             if( Input.GetKeyDown((nborNum+1)+"") )
             {
+                activeNborNum = nborNum;
                 activeNbor = HexTiler.GetNbor( climber.GetRow(), climber.GetCol(), nborNum );
                 SetActiveEntry( words.GetEntry( activeNbor.i, activeNbor.j ) );
             }

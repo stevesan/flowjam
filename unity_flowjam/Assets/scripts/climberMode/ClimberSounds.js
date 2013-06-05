@@ -33,7 +33,7 @@ function OnPlayerDie()
 function OnPlayerMove()
 {
     var index = Mathf.Clamp(
-            Mathf.Ceil( ClimberGame.main.GetLastScore() ) -1,
+            Mathf.Floor( ClimberGame.main.GetLastScore() ) -1,
             0, moveClips.length-1 );
     var clip = moveClips[ index ];
 

@@ -41,6 +41,11 @@ namespace SteveSharp
             return i >= 0 && j >= 0 && GetFlatIndex( i, j ) < data.Count;
         }
 
+        public bool GetInRange( Int2 ij )
+        {
+            return GetInRange( ij.i, ij.j );
+        }
+
         public int GetFlatIndex( int i, int j )
         {
             return i * numCols + j;

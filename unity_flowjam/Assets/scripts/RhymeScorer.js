@@ -1,5 +1,7 @@
 #pragma strict
 
+import System.Collections.Generic;
+
 var cmuDatabase:TextAsset;
 var mobyWordList:TextAsset;
 
