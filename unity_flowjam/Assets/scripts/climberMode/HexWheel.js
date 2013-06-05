@@ -16,7 +16,7 @@ function Start()
     }
 }
 
-function Update()
+function OnGUI()
 {
     if( ClimberGame.main.GetIsPlaying() )
     {
@@ -26,9 +26,15 @@ function Update()
         for( var k = 0; k < 6; k++ )
         {
             var nbor = HexTiler.GetNbor( i, j, k );
-            var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( nbor.i, nbor.j );
-            numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos) + gsOffset;
-            numbers[k].SetActive(true);
+
+            if( WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
+            {
+                var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( nbor.i, nbor.j );
+                numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos) + gsOffset;
+                numbers[k].SetActive(true);
+            }
+            else
+                numbers[k].SetActive(false);
         }
     }
     else

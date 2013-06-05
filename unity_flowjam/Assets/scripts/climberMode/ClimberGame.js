@@ -21,6 +21,91 @@ private var activeNbor:Int2;
 private var activeScore = 0.0;
 private var feedbackMsg = "";
 
+private class GameMode
+{
+    public function GetHelpText() { return ""; }
+    public function Start(game:ClimberGame) { }
+    public function Update(game:ClimberGame) { }
+    public function OnPlayerMove(game:ClimberGame) { }
+    public function GetShouldReplaceWords() { return true; }
+    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
+}
+
+private class ActionGameMode extends GameMode
+{
+    public function GetHelpText()
+    {
+        return "LAVA IS RISING!\nTo move, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.\nSPACE BAR TO START";
+    }
+
+    public function Start(game:ClimberGame)
+    {
+        game.words.Reset(999, 999);
+        ClimberCamera.main.SetFollow(true);
+    }
+
+    public function Update(game:ClimberGame)
+    {
+        game.UpdateHeightText();
+        game.centerText.text = "";
+
+        if( game.lava.transform.position.y >= game.climber.transform.position.y )
+        {
+            game.TriggerGameOver();
+        }
+        else
+        {
+            //----------------------------------------
+            //  Check for drop
+            //----------------------------------------
+            if( game.climber.GetGripSecs() < 0 )
+            {
+                game.MovePlayer( game.climber.GetRow()-2, game.climber.GetCol(), 0 );
+                game.GetComponent(Connectable).TriggerEvent("OnPlayerDrop");
+            }
+        }
+    }
+
+    public function GetScore(game:ClimberGame) { return game.GetGripBonus(); }
+}
+
+private class RelaxGameMode extends GameMode
+{
+    private var score = 0.0;
+
+    public function GetHelpText()
+    {
+        return "To move, press a number and type a rhyming word.\nBetter rhymes get more points\nSPACE BAR TO START";
+    }
+
+    public function Start(game:ClimberGame)
+    {
+        score = 0;
+
+        game.lava.Disable();
+        game.climber.SetShowGripSecs(false);
+        game.words.Reset(4,1);
+        ClimberCamera.main.SetFollow(false);
+    }
+
+    public function Update(game:ClimberGame)
+    {
+        game.centerText.text = "";
+        game.stateOut.text = "Score: " + score.ToString("0.0");
+    }
+
+    public function OnPlayerMove(game:ClimberGame)
+    {
+        score += game.GetLastScore();
+    }
+
+    public function GetShouldReplaceWords() { return false; }
+
+    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
+}
+
+private var gameMode:GameMode = null;
+
 function Awake()
 {
     main = this;
@@ -46,7 +131,7 @@ function Start()
 
 function GetIsPlaying()
 {
-    return state == "started";
+    return state == "playing";
 }
 
 function SetActiveEntry(entry:WordEntry)
@@ -74,8 +159,9 @@ function MovePlayer( i:int, j:int, gripBonus:float )
 {
     var climber = ClimberGuy.main;
 
-    // spawn a new word where we used to be
-    words.ReplaceEntry( climber.GetRow(), climber.GetCol() );
+    if( gameMode.GetShouldReplaceWords() )
+        // spawn a new word where we used to be
+        words.ReplaceEntry( climber.GetRow(), climber.GetCol() );
 
     // Destroy word at move target
     words.DestroyEntry( i, j );
@@ -96,6 +182,7 @@ function OnInputEnter()
     {
         MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
         GetComponent(Connectable).TriggerEvent("OnPlayerMove");
+        gameMode.OnPlayerMove( this );
     }
     else
     {
@@ -135,7 +222,7 @@ function OnInputCharacter()
         {
             var kudos = [ "OK", "Good", "Great", "Amazing", "Impossible" ];
 
-            feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + GetGripBonus();
+            feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + gameMode.GetScore(this);
         }
     }
 }
@@ -147,7 +234,7 @@ function OnHitKillZone()
 
 function TriggerGameOver()
 {
-    if( state == "started" )
+    if( state == "playing" )
     {
         GetComponent(Connectable).TriggerEvent("OnPlayerDie");
 
@@ -159,15 +246,15 @@ function TriggerGameOver()
     }
 }
 
-function TriggerGameStart()
+function StartPlaying()
 {
-    if( state == "gameover" || state == "startscreen" )
+    if( state == "gameover" || state == "helpscreen" )
     {
         SetActiveEntry(null);
-        words.OnGameStart();
         lava.OnGameStart();
         ClimberGuy.main.OnGameStart();
-        state = "started";
+        state = "playing";
+        gameMode.Start(this);
         words.DestroyEntry( ClimberGuy.main.GetRow(), ClimberGuy.main.GetCol() );
     }
 }
@@ -182,57 +269,65 @@ function GetPlayer()
     return ClimberGuy.main;
 }
 
-function Update ()
+function Update()
 {
     if( state == "startscreen" )
     {
-        centerText.text = "LAVA IS RISING!\nTo climb, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.\nSPACE BAR TO START";
+        centerText.text = "Press a number:\n"
+            + "1. Relax Mode\n"
+            + "2. Action Mode\n"
+            + "3. Race Mode\n"
+            + "4. 1 vs. 1 Mode\n";
+
+        if( Input.GetKeyDown("1") )
+        {
+            gameMode = new RelaxGameMode();
+            state = "helpscreen";
+        }
+        else if( Input.GetKeyDown("2") )
+        {
+            gameMode = new ActionGameMode();
+            state = "helpscreen";
+        }
+        /*
+        else if( Input.GetKeyDown("3") )
+            state = "raceStartscreen";
+        else if( Input.GetKeyDown("4") )
+            state = "versusStartscreen";
+            */
+
         stateOut.text = "";
         answerDisplay.text = "";
+    }
+    else if( state == "helpscreen" )
+    {
+        stateOut.text = "";
+        answerDisplay.text = "";
+        centerText.text = gameMode.GetHelpText();
 
         if( Input.GetKeyDown("space") )
-            TriggerGameStart();
+            StartPlaying();
     }
-    else if( state == "started" )
+    else if( state == "playing" )
     {
-        UpdateHeightText();
-        centerText.text = "";
-
-        if( lava.transform.position.y >= climber.transform.position.y )
+        for( var nborNum = 0; nborNum < 6; nborNum++ )
         {
-            TriggerGameOver();
+            if( Input.GetKeyDown((nborNum+1)+"") )
+            {
+                activeNbor = HexTiler.GetNbor( climber.GetRow(), climber.GetCol(), nborNum );
+                SetActiveEntry( words.GetEntry( activeNbor.i, activeNbor.j ) );
+            }
+        }
+
+        if( activeEntry != null )
+        {
+            answerDisplay.text = inputMgr.GetInput()+"_\n" + feedbackMsg;
+            answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
         }
         else
-        {
-            //----------------------------------------
-            //  
-            //----------------------------------------
-            for( var nborNum = 0; nborNum < 6; nborNum++ )
-            {
-                if( Input.GetKeyDown((nborNum+1)+"") )
-                {
-                    activeNbor = HexTiler.GetNbor( GetPlayer().GetRow(), GetPlayer().GetCol(), nborNum );
-                    SetActiveEntry( words.GetEntry( activeNbor.i, activeNbor.j ) );
-                }
-            }
+            answerDisplay.text = "";
 
-            if( activeEntry != null )
-            {
-                answerDisplay.text = inputMgr.GetInput()+"_\n" + feedbackMsg;
-                answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
-            }
-            else
-                answerDisplay.text = "";
-
-            //----------------------------------------
-            //  Check for drop
-            //----------------------------------------
-            if( climber.GetGripSecs() < 0 )
-            {
-                MovePlayer( climber.GetRow()-2, climber.GetCol(), 0 );
-                GetComponent(Connectable).TriggerEvent("OnPlayerDrop");
-            }
-        }
+        gameMode.Update(this);
     }
     else if( state == "gameover" )
     {
@@ -242,7 +337,7 @@ function Update ()
         answerDisplay.text = "";
 
         if( Input.GetKeyDown("space") )
-            TriggerGameStart();
+            StartPlaying();
     }
 
 }

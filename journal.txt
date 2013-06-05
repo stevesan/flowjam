@@ -1,6 +1,7 @@
 TASK LIST:
 
-- don't drop when they hit enter - flash the error instead
+- "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
+    most like Spelltower's puzzle mode
 
 ways to make more challenging:
 
@@ -11,9 +12,6 @@ ways to make more challenging:
     * jump two cells for 2-syl rhymes?
     * time-trials - get to the top ASAP
 
-
-- "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
-    most like Spelltower's puzzle mode
 
 - "climb" vs mode, could be turn-based hot-seat: like relax mode, start on opposite ends of wall, goal is to get most points
     dynamics: trap the other player
@@ -177,3 +175,4 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     eh..no, stars + points would get confusing.. but better VISUAL feedback wouldn't hurt, just don't tie it to some quantity
 - prevent lame rhymes and just repeating the word
     done, just checking substrings
+- don't drop when they hit enter - flash the error instead

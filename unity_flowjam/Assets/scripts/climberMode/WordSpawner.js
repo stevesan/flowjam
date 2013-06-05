@@ -1,10 +1,18 @@
 #pragma strict
 
+public static var main:WordSpawner = null;
+
 var wordPrefab:GameObject;
 
 var width = 20.0;
 var height = 20.0;
 var wordColor = Color.white;
+
+function Awake()
+{
+    Utils.Assert( main == null );
+    main = this;
+}
 
 class WordEntry
 {
@@ -24,13 +32,11 @@ function DestroyEntry( i:int, j:int )
     }
 }
 
-function ClearEntries()
+function Clear()
 {
     for( var i = 0; i < entries.GetCount(); i++ )
-    {
         if( entries[i] != null )
             Destroy(entries[i].object);
-    }
 
     entries.Clear();
 }
@@ -63,24 +69,31 @@ private function CreateEntry(wsPos:Vector3)
     return entry;
 }
 
-function OnGameStart()
+function Reset(rowRadius:int, colRadius:int)
 {
-    ClearEntries();
+    Clear();
 
-    var grid = ClimberGrid.mainTiler;
-    entries.Resize( grid.numRows, grid.numCols, null );
+    var tiler = ClimberGrid.mainTiler;
+    var tiles = tiler.GetTiles();
+    entries.Resize( tiles.numRows, tiles.numCols, null );
 
-    for( var i = 0; i < grid.numRows; i++ )
-        for( var j = 0; j < grid.numCols; j++ )
+    var guy = ClimberGuy.main;
+    var row0 = Mathf.Max( 0, guy.initRow - rowRadius );
+    var row1 = Mathf.Min( tiles.numRows, guy.initRow + rowRadius );
+    var col0 = Mathf.Max( 0, guy.initCol - colRadius );
+    var col1 = Mathf.Min( tiles.numCols, guy.initCol + colRadius );
+
+    for( var i = row0; i <= row1; i++ )
+        for( var j = col0; j <= col1; j++ )
             ReplaceEntry( i, j );
 }
 
 function OnGameOver()
 {
-    ClearEntries();
+    Clear();
 }
 
-function Update ()
+function OnGUI()
 {
     // Make sure words move, to stay in the same world position
     for( var i = 0; i < entries.GetCount(); i++ )

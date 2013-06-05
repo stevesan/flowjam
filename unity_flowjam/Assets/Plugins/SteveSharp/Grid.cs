@@ -19,7 +19,8 @@ namespace SteveSharp
         // Row-major
         private List<T> data = new List<T>();
 
-        private int numCols, numRows;
+        public int numCols { get; private set; }
+        public int numRows { get; private set; }
 
         public int GetCount() { return numCols * numRows; }
 
@@ -35,6 +36,11 @@ namespace SteveSharp
                     data.Add( defaultValue );
         }
 
+        public bool GetInRange( int i, int j )
+        {
+            return i >= 0 && j >= 0 && GetFlatIndex( i, j ) < data.Count;
+        }
+
         public int GetFlatIndex( int i, int j )
         {
             return i * numCols + j;
@@ -42,12 +48,18 @@ namespace SteveSharp
 
         public void Set( int i, int j, T value )
         {
-            data[ GetFlatIndex(i,j) ] = value;
+            if( !GetInRange(i,j) )
+                return;
+            else
+                data[ GetFlatIndex(i,j) ] = value;
         }
 
         public T Get( int i, int j )
         {
-            return data[ GetFlatIndex(i,j) ];
+            if( !GetInRange(i,j) )
+                return default(T);
+            else
+                return data[ GetFlatIndex(i,j) ];
         }
 
         public T this[int i, int j]

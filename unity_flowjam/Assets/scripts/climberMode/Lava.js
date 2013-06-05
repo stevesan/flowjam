@@ -6,15 +6,22 @@ private var state = "idle";
 
 private var origPos:Vector3;
 
-function Start ()
+function Start()
 {
     origPos = transform.position;
+}
+
+function Disable()
+{
+    state = "disabled";
+    gameObject.SetActive(false);
 }
 
 function OnGameStart()
 {
     transform.position = origPos;
     state = "active";
+    gameObject.SetActive(true);
 }
 
 function OnGameOver()

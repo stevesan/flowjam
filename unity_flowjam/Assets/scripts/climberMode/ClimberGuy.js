@@ -20,9 +20,15 @@ private var currCol = 0;
 private var state = "idle";
 private var gripSecsDisplay:GameObject;
 private var gripSecs = 0.0;
+private var showGripSecs = true;
 
 function GetRow() { return currRow; }
 function GetCol() { return currCol; }
+
+function SetShowGripSecs(val)
+{
+    showGripSecs = val;
+}
 
 function GetHexes()
 {
@@ -81,6 +87,7 @@ function DoMove( dir:Vector3, distance:float )
 function OnGameStart()
 {
     MoveTo( initRow, initCol, 0, true );
+    showGripSecs = true;
 }
 
 function OnGameOver()
@@ -114,12 +121,15 @@ function Update()
             }
         }
         else if( state == "idle" )
-        {
             gripSecs -= Time.deltaTime;
-        }
 
-        gripSecsDisplay.GetComponent(GUIText).text = gripSecs.ToString("0.0");
-        gripSecsDisplay.transform.position = Utils.WorldToGUIPoint(transform.position) + gripSecsDisplayOffset;
+        if( showGripSecs )
+        {
+            gripSecsDisplay.GetComponent(GUIText).text = gripSecs.ToString("0.0");
+            gripSecsDisplay.transform.position = Utils.WorldToGUIPoint(transform.position) + gripSecsDisplayOffset;
+        }
+        else
+            gripSecsDisplay.GetComponent(GUIText).text = "";
     }
     else
     {
