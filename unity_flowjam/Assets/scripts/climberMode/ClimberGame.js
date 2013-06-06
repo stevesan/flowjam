@@ -14,24 +14,127 @@ var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
 var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
-private var answerDisplay:GUIText;
+public var answerDisplay:GUIText;
 private var state = "startscreen";
-private var activeEntry:WordEntry;
-private var activeNbor:Int2;
-private var activeNborNum = -1;
-private var activeScore = 0.0;
-private var feedbackMsg = "";
 
 private class GameMode
 {
+    protected var game:ClimberGame;
+    protected var activeEntry:WordEntry;
+    protected var activeNbor:Int2;
+    protected var activeNborNum = -1;
+    protected var activeScore = 0.0;
+    protected var feedbackMsg = "";
+
+    function SetGame(game:ClimberGame)
+    {
+        this.game = game;
+    }
+
     public function GetHelpText() { return ""; }
-    public function Start(game:ClimberGame) { }
-    public function Update(game:ClimberGame) { }
-    public function OnPlayerMove(game:ClimberGame) { }
+    public function Start() { }
+
+    public function Update()
+    {
+        for( var nborNum = 0; nborNum < 6; nborNum++ )
+        {
+            if( Input.GetKeyDown((nborNum+1)+"") )
+            {
+                var climber = ClimberGuy.main;
+                activeNborNum = nborNum;
+                activeNbor = HexTiler.GetNbor( climber.GetRow(), climber.GetCol(), nborNum );
+                SetActiveEntry( game.words.GetEntry( activeNbor.i, activeNbor.j ) );
+            }
+        }
+
+        if( activeEntry != null )
+        {
+            game.answerDisplay.text = game.inputMgr.GetInput()+"_\n" + feedbackMsg;
+            game.answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + game.gsAnswerDisplayOffset;
+        }
+        else
+            game.answerDisplay.text = "";
+    }
+
+    public function OnInputEnter() {}
+
+    public function OnInputCharacter()
+    {
+        if( activeEntry == null )
+            feedbackMsg = "press a number";
+        else
+        {
+            var input = game.inputMgr.GetInput();
+            var word = activeEntry.word;
+
+            activeScore = 0;
+
+            if( input == "" )
+            {
+                feedbackMsg = "TYPE!";
+            }
+            else if( !RhymeScorer.main.GetIsWord(input) )
+            {
+                feedbackMsg = "Not a word";
+            }
+            else if( RhymeScorer.main.IsTooSimilar( input, word ) )
+            {
+                feedbackMsg = "Too similar";
+            }
+            else
+            {
+                activeScore = RhymeScorer.main.ScoreWords( input, word );
+
+                if( activeScore == 0 )
+                    feedbackMsg = "Doesn't rhyme";
+                else
+                {
+                    var kudos = [ "OK", "Good", "Great", "Amazing", "Impossible" ];
+
+                    feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + GetLastScore();
+                }
+            }
+        }
+    }
+
     public function GetShouldReplaceWords() { return true; }
-    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
-    public function GetGameOverText(game:ClimberGame) { return "Game over!"; }
-    public function GetIsDoubleMove(game:ClimberGame) { return false; }
+    public function GetGameOverText() { return "Game over!"; }
+    public function GetLastScore() { return activeScore; }
+
+    function SetActiveEntry(entry:WordEntry)
+    {
+        if( activeEntry != entry )
+        {
+            if( activeEntry != null && activeEntry.object != null )
+                activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
+
+            activeEntry = entry;
+
+            game.inputMgr.ClearInput();
+            OnInputCharacter();
+
+            if( activeEntry != null && activeEntry.object != null )
+                activeEntry.object.GetComponent(GUIText).material.color = Color.white;
+        }
+    }
+
+    function MovePlayer(i:int, j:int, gripBonus:float )
+    {
+        var climber = ClimberGuy.main;
+
+        if( GetShouldReplaceWords() )
+            // spawn a new word where we used to be
+            game.words.ReplaceEntry( climber.GetRow(), climber.GetCol() );
+
+        // Destroy word at move target
+        game.words.DestroyEntry( i, j );
+
+        // Move the climber!
+        climber.MoveTo( i, j, gripBonus, false );
+
+        // Reset input
+        SetActiveEntry(null);
+    }
 }
 
 private class ActionGameMode extends GameMode
@@ -41,14 +144,22 @@ private class ActionGameMode extends GameMode
         return "LAVA IS RISING!\nTo move, press a number and type a rhyming word.\nMOVE FAST! You can't hold on forever.";
     }
 
-    public function Start(game:ClimberGame)
+    function GetGripBonus()
     {
+        return Mathf.Max( 0, 2 * (activeScore-1) );
+    }
+
+    public function Start()
+    {
+        SetActiveEntry(null);
         game.words.Reset(999, 999);
         ClimberCamera.main.SetFollow(true);
     }
 
-    public function Update(game:ClimberGame)
+    public function Update()
     {
+        super.Update();
+
         game.stateOut.text = "HEIGHT: " + game.climber.transform.position.y.ToString("0.0") + " M";
         game.centerText.text = "";
 
@@ -63,17 +174,34 @@ private class ActionGameMode extends GameMode
             //----------------------------------------
             if( game.climber.GetGripSecs() < 0 )
             {
-                game.MovePlayer( game.climber.GetRow()-2, game.climber.GetCol(), 0 );
+                MovePlayer( game.climber.GetRow()-2, game.climber.GetCol(), 0 );
                 game.GetComponent(Connectable).TriggerEvent("OnPlayerDrop");
             }
         }
+
     }
 
-    public function GetScore(game:ClimberGame) { return game.GetGripBonus(); }
-
-    public function GetGameOverText(game:ClimberGame)
+    public function GetGameOverText()
     {
         return "GAME OVER! Reached " + game.climber.transform.position.y.ToString("0.0") + " meters";
+    }
+
+    function OnInputEnter()
+    {
+        if( activeEntry == null )
+            return;
+
+        if( activeScore > 0.0 )
+        {
+            var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
+
+            MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
+            game.GetComponent(Connectable).TriggerEvent("OnPlayerMove");
+        }
+        else
+        {
+            // play error sound, flash feedback msg
+        }
     }
 }
 
@@ -89,8 +217,9 @@ private class RaceGameMode extends GameMode
         return "To move, press a number and type a rhyming word.\nReach "+goalHeight+" M as fast as possible!";
     }
 
-    public function Start(game:ClimberGame)
+    public function Start()
     {
+        SetActiveEntry(null);
         game.words.Reset(999, 999);
         game.climber.SetShowGripSecs(false);
         ClimberCamera.main.SetFollow(true);
@@ -110,8 +239,35 @@ private class RaceGameMode extends GameMode
         return PlayerPrefs.GetFloat("bestRaceTime", 999.0);
     }
 
-    public function Update(game:ClimberGame)
+    function OnInputEnter()
     {
+        if( activeEntry == null )
+            return;
+
+        if( activeScore > 0.0 )
+        {
+            var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
+
+            if( GetIsDoubleMove() && ClimberGrid.mainTiler.GetTiles().GetInRange(doubleNbor) )
+            {
+                MovePlayer( doubleNbor.i, doubleNbor.j, 0 );
+            }
+            else
+            {
+                MovePlayer( activeNbor.i, activeNbor.j, 0 );
+            }
+            game.GetComponent(Connectable).TriggerEvent("OnPlayerMove");
+        }
+        else
+        {
+            // play error sound, flash feedback msg
+        }
+    }
+
+    public function Update()
+    {
+        super.Update();
+
         elapsedTime += Time.deltaTime;
 
         var ht = game.climber.transform.position.y - startHeight;
@@ -130,18 +286,16 @@ private class RaceGameMode extends GameMode
         }
     }
 
-    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
-
-    public function GetGameOverText(game:ClimberGame)
+    public function GetGameOverText()
     {
         return "FINISHED!\nTIME: " + GetTime().ToString("0.00") + " seconds\n"+
             "BEST TIME: " + PlayerPrefs.GetFloat("bestRaceTime", 999.0).ToString("0.00")
             + (newRecord ? "\nNEW RECORD :D :D :D" : "");
     }
 
-    public function GetIsDoubleMove(game:ClimberGame)
+    public function GetIsDoubleMove()
     {
-        return game.GetLastScore() >= 2.0;
+        return activeScore >= 3.0;
     }
 }
 
@@ -154,8 +308,9 @@ private class RelaxGameMode extends GameMode
         return "To move, press a number and type a rhyming word.\nBetter rhymes get more points";
     }
 
-    public function Start(game:ClimberGame)
+    public function Start()
     {
+        SetActiveEntry(null);
         score = 0;
 
         game.lava.Disable();
@@ -164,20 +319,38 @@ private class RelaxGameMode extends GameMode
         ClimberCamera.main.SetFollow(false);
     }
 
-    public function Update(game:ClimberGame)
+    public function Update()
     {
+        super.Update();
         game.centerText.text = "";
         game.stateOut.text = "Score: " + score.ToString("0.0");
     }
 
-    public function OnPlayerMove(game:ClimberGame)
+    function OnInputEnter()
     {
-        score += game.GetLastScore();
+        if( activeEntry == null )
+            return;
+
+        if( activeScore > 0.0 )
+        {
+            var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
+
+            MovePlayer( activeNbor.i, activeNbor.j, 0 );
+            OnPlayerMove();
+            game.GetComponent(Connectable).TriggerEvent("OnPlayerMove");
+        }
+        else
+        {
+            // play error sound, flash feedback msg
+        }
+    }
+
+    public function OnPlayerMove()
+    {
+        score += activeScore;
     }
 
     public function GetShouldReplaceWords() { return false; }
-
-    public function GetScore(game:ClimberGame) { return game.GetLastScore(); }
 }
 
 private var gameMode:GameMode = null;
@@ -210,106 +383,14 @@ function GetIsPlaying()
     return state == "playing";
 }
 
-function SetActiveEntry(entry:WordEntry)
+function OnInputCharacter()
 {
-    if( activeEntry != entry )
-    {
-        if( activeEntry != null && activeEntry.object != null )
-            activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
-
-        activeEntry = entry;
-
-        inputMgr.ClearInput();
-        OnInputCharacter();
-
-        if( activeEntry != null && activeEntry.object != null )
-            activeEntry.object.GetComponent(GUIText).material.color = Color.white;
-    }
-}
-
-function GetLastScore() { return activeScore; }
-
-function GetGripBonus() { return Mathf.Max( 0, 2 * (activeScore-1) ); }
-
-function MovePlayer( i:int, j:int, gripBonus:float )
-{
-    var climber = ClimberGuy.main;
-
-    if( gameMode.GetShouldReplaceWords() )
-        // spawn a new word where we used to be
-        words.ReplaceEntry( climber.GetRow(), climber.GetCol() );
-
-    // Destroy word at move target
-    words.DestroyEntry( i, j );
-
-    // Move the climber!
-    climber.MoveTo( i, j, gripBonus, false );
-
-    // Reset input
-    SetActiveEntry(null);
+    gameMode.OnInputCharacter();
 }
 
 function OnInputEnter()
 {
-    if( activeEntry == null )
-        return;
-
-    if( activeScore > 0.0 )
-    {
-        var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
-
-        if( gameMode.GetIsDoubleMove(this) && ClimberGrid.mainTiler.GetTiles().GetInRange(doubleNbor) )
-        {
-            MovePlayer( doubleNbor.i, doubleNbor.j, GetGripBonus() );
-        }
-        else
-        {
-            MovePlayer( activeNbor.i, activeNbor.j, GetGripBonus() );
-        }
-        GetComponent(Connectable).TriggerEvent("OnPlayerMove");
-        gameMode.OnPlayerMove( this );
-    }
-    else
-    {
-        // play error sound, flash feedback msg
-    }
-}
-
-function OnInputCharacter()
-{
-    if( activeEntry == null )
-        return;
-
-    var input = inputMgr.GetInput();
-    var word = activeEntry.word;
-
-    activeScore = 0;
-
-    if( input == "" )
-    {
-        feedbackMsg = "TYPE!";
-    }
-    else if( !RhymeScorer.main.GetIsWord(input) )
-    {
-        feedbackMsg = "Not a word";
-    }
-    else if( RhymeScorer.main.IsTooSimilar( input, word ) )
-    {
-        feedbackMsg = "Too similar";
-    }
-    else
-    {
-        activeScore = RhymeScorer.main.ScoreWords( input, word );
-
-        if( activeScore == 0 )
-            feedbackMsg = "Doesn't rhyme";
-        else
-        {
-            var kudos = [ "OK", "Good", "Great", "Amazing", "Impossible" ];
-
-            feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + gameMode.GetScore(this);
-        }
-    }
+    gameMode.OnInputEnter();
 }
 
 function OnHitKillZone()
@@ -323,7 +404,6 @@ function TriggerGameOver()
     {
         GetComponent(Connectable).TriggerEvent("OnPlayerDie");
 
-        SetActiveEntry(null);
         words.OnGameOver();
         lava.OnGameOver();
         ClimberGuy.main.OnGameOver();
@@ -335,11 +415,10 @@ function StartPlaying()
 {
     if( state == "gameover" || state == "helpscreen" )
     {
-        SetActiveEntry(null);
         lava.OnGameStart();
         ClimberGuy.main.OnGameStart();
         state = "playing";
-        gameMode.Start(this);
+        gameMode.Start();
         words.DestroyEntry( ClimberGuy.main.GetRow(), ClimberGuy.main.GetCol() );
     }
 }
@@ -374,6 +453,9 @@ function Update()
             gameMode = new RaceGameMode();
             state = "helpscreen";
         }
+
+        if( gameMode != null )
+            gameMode.SetGame(this);
         /*
         else if( Input.GetKeyDown("4") )
             state = "versusStartscreen";
@@ -393,30 +475,12 @@ function Update()
     }
     else if( state == "playing" )
     {
-        for( var nborNum = 0; nborNum < 6; nborNum++ )
-        {
-            if( Input.GetKeyDown((nborNum+1)+"") )
-            {
-                activeNborNum = nborNum;
-                activeNbor = HexTiler.GetNbor( climber.GetRow(), climber.GetCol(), nborNum );
-                SetActiveEntry( words.GetEntry( activeNbor.i, activeNbor.j ) );
-            }
-        }
-
-        if( activeEntry != null )
-        {
-            answerDisplay.text = inputMgr.GetInput()+"_\n" + feedbackMsg;
-            answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + gsAnswerDisplayOffset;
-        }
-        else
-            answerDisplay.text = "";
-
-        gameMode.Update(this);
+        gameMode.Update();
     }
     else if( state == "gameover" )
     {
         stateOut.text = "";
-        centerText.text = gameMode.GetGameOverText(this);
+        centerText.text = gameMode.GetGameOverText();
         centerText.text += "\n\nSPACE BAR TO RESTART";
         answerDisplay.text = "";
 
@@ -424,4 +488,9 @@ function Update()
             StartPlaying();
     }
 
+}
+
+function GetLastScore()
+{
+    return gameMode.GetLastScore();
 }
