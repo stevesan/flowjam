@@ -59,9 +59,10 @@ function Update()
             {
                 // ignore numbers
             }
-            else
+            else if( (c >= "a"[0] && c <= "z"[0]) || (c >= "A"[0] && c <= "Z"[0]) )
             {
                 input += c;
+                input = input.ToLower();
                 soundToPlay = typeSound;
                 con.TriggerEvent("OnInputCharacter");
             }
