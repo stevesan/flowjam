@@ -9,13 +9,16 @@ var stateOut:GUIText;
 var centerText:GUIText;
 var words:WordSpawner;
 var inputMgr:TextInput;
+var wheel:HexWheel;
 
 var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
 var selectedPromptColor = Color.yellow;
 var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
+var gsFeedbackDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
 public var answerDisplay:GUIText;
+public var feedbackDisplay:GUIText;
 private var state = "startscreen";
 
 private class GameMode
@@ -45,6 +48,7 @@ private class GameMode
                 activeNborNum = nborNum;
                 activeNbor = HexTiler.GetNbor( climber.GetRow(), climber.GetCol(), nborNum );
                 SetActiveEntry( game.words.GetEntry( activeNbor.i, activeNbor.j ) );
+                game.wheel.hidden = nborNum;
             }
         }
     }
@@ -53,11 +57,17 @@ private class GameMode
     {
         if( activeEntry != null )
         {
-            game.answerDisplay.text = game.inputMgr.GetInput()+"_\n" + feedbackMsg;
+            game.answerDisplay.text = game.inputMgr.GetInput()+"_";
             game.answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + game.gsAnswerDisplayOffset;
+
+            game.feedbackDisplay.text = feedbackMsg;
+            game.feedbackDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + game.gsFeedbackDisplayOffset;
         }
         else
+        {
             game.answerDisplay.text = "";
+            game.feedbackDisplay.text = "";
+        }
     }
 
     public function OnInputEnter() {}
@@ -75,7 +85,7 @@ private class GameMode
 
             if( input == "" )
             {
-                feedbackMsg = "TYPE!";
+                feedbackMsg = "RHYME?";
             }
             else if( !RhymeScorer.main.GetIsWord(input) )
             {
@@ -118,7 +128,10 @@ private class GameMode
             OnInputCharacter();
 
             if( activeEntry != null && activeEntry.object != null )
-                activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
+                activeEntry.object.GetComponent(GUIText).material.color = game.selectedPromptColor;
+
+            if( entry == null )
+                game.wheel.hidden = -1;
         }
     }
 
@@ -387,6 +400,13 @@ function Start()
 
     answerDisplay = answerDisplayObject.GetComponent(GUIText);
     answerDisplay.material.color = answerDisplayColor;
+
+    var feedbackDisplayObj = Utils.SpawnFromPrefab( answerDisplayPrefab );
+    feedbackDisplayObj.SetActive(true);
+    answerDisplayPrefab.SetActive(false);
+
+    feedbackDisplay = feedbackDisplayObj.GetComponent(GUIText);
+    feedbackDisplay.material.color = answerDisplayColor;
 }
 
 function GetIsPlaying()
@@ -474,11 +494,13 @@ function Update()
 
         stateOut.text = "";
         answerDisplay.text = "";
+        feedbackDisplay.text = "";
     }
     else if( state == "helpscreen" )
     {
         stateOut.text = "";
         answerDisplay.text = "";
+        feedbackDisplay.text = "";
         centerText.text = gameMode.GetHelpText() + "\n\nSPACE BAR TO START";
 
         if( Input.GetKeyDown("space") )
@@ -494,6 +516,7 @@ function Update()
         centerText.text = gameMode.GetGameOverText();
         centerText.text += "\n\nSPACE BAR TO RESTART";
         answerDisplay.text = "";
+        feedbackDisplay.text = "";
 
         if( Input.GetKeyDown("space") )
             StartPlaying();

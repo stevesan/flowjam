@@ -8,6 +8,9 @@ var width = 20.0;
 var height = 20.0;
 var wordColor = Color.white;
 
+var nearFontSize = 32;
+var farFontSize = 16;
+
 function Awake()
 {
     Utils.Assert( main == null );
@@ -103,7 +106,27 @@ function LateUpdate()
         var entry = entries[i];
 
         if( entry != null )
+        {
             entry.object.transform.position = Utils.WorldToGUIPoint(entry.pos);
+            entry.object.guiText.fontSize = farFontSize;
+        }
+    }
+
+    //----------------------------------------
+    //  Make words near player larger
+    //----------------------------------------
+    if( ClimberGame.main.GetIsPlaying() )
+    {
+        i = ClimberGuy.main.GetRow();
+        var j = ClimberGuy.main.GetCol();
+
+        for( var k = 0; k < 6; k++ )
+        {
+            var nbor = HexTiler.GetNbor( i, j, k );
+            entry = GetEntry( nbor.i, nbor.j );
+            if( entry != null )
+                entry.object.guiText.fontSize = nearFontSize;
+        }
     }
 
 }

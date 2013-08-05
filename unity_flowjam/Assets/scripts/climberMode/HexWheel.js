@@ -8,6 +8,8 @@ var numberPrefab:GameObject;
 var color = Color.white;
 var gsOffset = Vector3(0,0.3,0);
 
+var hidden = -1;
+
 private var numbers = new List.<GameObject>();
 
 function Start()
@@ -31,7 +33,8 @@ function LateUpdate()
         {
             var nbor = HexTiler.GetNbor( i, j, k );
 
-            if( WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
+            if( k != hidden
+                    && WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
             {
                 var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( nbor.i, nbor.j );
                 numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos) + gsOffset;
