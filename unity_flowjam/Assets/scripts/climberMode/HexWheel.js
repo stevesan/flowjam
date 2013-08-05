@@ -1,5 +1,9 @@
 #pragma strict
 
+//----------------------------------------
+//  The 1-6 keys that show around the player
+//----------------------------------------
+
 var numberPrefab:GameObject;
 var color = Color.white;
 var gsOffset = Vector3(0,0.3,0);
@@ -16,7 +20,7 @@ function Start()
     }
 }
 
-function OnGUI()
+function LateUpdate()
 {
     if( ClimberGame.main.GetIsPlaying() )
     {

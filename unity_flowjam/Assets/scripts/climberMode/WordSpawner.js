@@ -55,12 +55,14 @@ function GetEntry( i:int, j:int )
 
 private function CreateEntry(wsPos:Vector3)
 {
+    wordPrefab.SetActive(false);
+
     var entry = new WordEntry();
     entry.pos = wsPos;
     entry.word = RhymeScorer.main.GetRandomPromptWord();
     entry.object = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
     entry.object.SetActive(true);
-    wordPrefab.SetActive(false);
+    entry.object.name = "word:"+entry.word;
 
     var t = entry.object.GetComponent(GUIText);
     t.text = entry.word;
@@ -93,7 +95,7 @@ function OnGameOver()
     Clear();
 }
 
-function OnGUI()
+function LateUpdate()
 {
     // Make sure words move, to stay in the same world position
     for( var i = 0; i < entries.GetCount(); i++ )

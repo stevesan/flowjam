@@ -47,7 +47,10 @@ private class GameMode
                 SetActiveEntry( game.words.GetEntry( activeNbor.i, activeNbor.j ) );
             }
         }
+    }
 
+    public function LateUpdate()
+    {
         if( activeEntry != null )
         {
             game.answerDisplay.text = game.inputMgr.GetInput()+"_\n" + feedbackMsg;
@@ -206,11 +209,12 @@ private class ActionGameMode extends GameMode
     }
 }
 
-private class RaceGameMode extends GameMode
+public class RaceMode extends GameMode
 {
+    public var goalHeight = 300.0;
+
     private var elapsedTime = 0.0;
     private var startHeight = 0.0;
-    private var goalHeight = 300.0;
     private var newRecord = false;
 
     public function GetHelpText()
@@ -299,6 +303,7 @@ private class RaceGameMode extends GameMode
         return activeScore >= 3.0;
     }
 }
+var raceMode = new RaceMode();
 
 public class RelaxMode extends GameMode
 {
@@ -362,6 +367,8 @@ private var gameMode:GameMode = null;
 function Awake()
 {
     main = this;
+
+    lava.gameObject.SetActive(false);
 }
 
 function Start()
@@ -454,7 +461,7 @@ function Update()
         }
         else if( Input.GetKeyDown("3") )
         {
-            gameMode = new RaceGameMode();
+            gameMode = raceMode;
             state = "helpscreen";
         }
 
@@ -492,6 +499,12 @@ function Update()
             StartPlaying();
     }
 
+}
+
+function LateUpdate()
+{
+    if( state == "playing" )
+        gameMode.LateUpdate();
 }
 
 function GetLastScore()
