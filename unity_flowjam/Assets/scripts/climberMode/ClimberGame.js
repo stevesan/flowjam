@@ -12,6 +12,7 @@ var inputMgr:TextInput;
 
 var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
+var selectedPromptColor = Color.yellow;
 var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
 
 public var answerDisplay:GUIText;
@@ -106,7 +107,7 @@ private class GameMode
         if( activeEntry != entry )
         {
             if( activeEntry != null && activeEntry.object != null )
-                activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
+                activeEntry.object.GetComponent(GUIText).material.color = Color.white;
 
             activeEntry = entry;
 
@@ -114,7 +115,7 @@ private class GameMode
             OnInputCharacter();
 
             if( activeEntry != null && activeEntry.object != null )
-                activeEntry.object.GetComponent(GUIText).material.color = Color.white;
+                activeEntry.object.GetComponent(GUIText).material.color = Color.yellow;
         }
     }
 
@@ -209,7 +210,7 @@ private class RaceGameMode extends GameMode
 {
     private var elapsedTime = 0.0;
     private var startHeight = 0.0;
-    private var goalHeight = 30.0;
+    private var goalHeight = 300.0;
     private var newRecord = false;
 
     public function GetHelpText()
@@ -299,8 +300,10 @@ private class RaceGameMode extends GameMode
     }
 }
 
-private class RelaxGameMode extends GameMode
+public class RelaxMode extends GameMode
 {
+    public var rowRadius = 4;
+    public var colRadius = 1;
     private var score = 0.0;
 
     public function GetHelpText()
@@ -315,7 +318,7 @@ private class RelaxGameMode extends GameMode
 
         game.lava.Disable();
         game.climber.SetShowGripSecs(false);
-        game.words.Reset(4,1);
+        game.words.Reset( rowRadius, colRadius );
         ClimberCamera.main.SetFollow(false);
     }
 
@@ -352,6 +355,7 @@ private class RelaxGameMode extends GameMode
 
     public function GetShouldReplaceWords() { return false; }
 }
+var relaxMode = new RelaxMode();
 
 private var gameMode:GameMode = null;
 
@@ -367,7 +371,7 @@ function Start()
     inputEvents.AddListener(this.gameObject, "OnInputCharacter");
     inputEvents.AddListener(this.gameObject, "OnBackspace", "OnInputCharacter");
 
-    centerText.material.color = Color(1,1,0);
+    centerText.material.color = Color(1,1,1);
     stateOut.material.color = Color(1,1,1);
 
     var answerDisplayObject = Utils.SpawnFromPrefab( answerDisplayPrefab );
@@ -440,7 +444,7 @@ function Update()
 
         if( Input.GetKeyDown("1") )
         {
-            gameMode = new RelaxGameMode();
+            gameMode = relaxMode;
             state = "helpscreen";
         }
         else if( Input.GetKeyDown("2") )

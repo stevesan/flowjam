@@ -25,6 +25,8 @@ function LateUpdate()
 {
     if( follow )
     {
-        transform.position.y = ClimberGuy.main.transform.position.y + yOffset;
+        transform.position.x = ClimberGuy.main.transform.position.x;
+        transform.position.y = ClimberGuy.main.transform.position.y;
+        transform.position.y += yOffset;
     }
 }

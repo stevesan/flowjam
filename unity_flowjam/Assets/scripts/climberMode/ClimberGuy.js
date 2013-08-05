@@ -71,6 +71,7 @@ function MoveTo( i:int, j:int, gripBonus:float, teleport:boolean )
         moveDir = delta.normalized;
         moveDistance = delta.magnitude;
         state = "moving";
+        SendMessage("OnMoveBegin");
     }
 
     gripSecs = defaultGripSecs + gripBonus;
@@ -101,6 +102,7 @@ function OnMoveEnd()
     {
         state = "idle";
         GetComponent(Connectable).TriggerEvent("OnMoveEnd");
+        SendMessage("OnMoveEnd");
     }
 }
 

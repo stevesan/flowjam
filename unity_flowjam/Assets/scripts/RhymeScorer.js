@@ -4,6 +4,7 @@ import System.Collections.Generic;
 
 var cmuDatabase:TextAsset;
 var mobyWordList:TextAsset;
+var debug = false;
 
 private var proDict:Dictionary.<String, String[]> = null;
 private var validPromptWords:List.<String> = null;
@@ -18,6 +19,8 @@ static private var VOWEL_PHONEMES = [
         "OW", "OY",
         "UH", "UW"];
 
+// These consontants are merged with their preceding vowels, because they modify
+// the sound of those vowels. Ex: the 'o' in 'sole' is different from 'son'
 static private var SYLLABIC_CONSONANTS = [ "L", "M", "N", "NG", "R" ];
 
 private var mobyWordSet = new HashSet.<String>();
@@ -35,6 +38,17 @@ class ScoreInfo
     var score:float;
     var raw:float;
 };
+
+//----------------------------------------
+//  
+//----------------------------------------
+function ProToString( phos:String[] )
+{
+    var s = "";
+    for( var pho in phos )
+        s += pho + " ";
+    return s;
+}
 
 
 //----------------------------------------
@@ -88,8 +102,8 @@ function ParseCMUDatabase( lines:String[] )
 
 class Syllable
 {
-    var nucleus:String;
-    var coda:String;
+    var nucleus:String; // the vowel part, such as the "om" in "homes"
+    var coda:String;    // the ending part, such as the "Z" in "homes"
 
     function Syllable()
     {
@@ -182,6 +196,10 @@ function IsSamePair(a1:String, b1:String, a2:String, b2:String)
         || (a1 == b2 && b1 == a2);
 }
 
+//----------------------------------------
+//  The 'nucleus' is the vowel of the syllable. This is the most important for rhyming.
+//  We have this function here to allow for some hacks.
+//----------------------------------------
 function NucleiiMatch(a:Syllable, b:Syllable)
 {
     if( a.nucleus == b.nucleus )
@@ -196,6 +214,11 @@ function NucleiiMatch(a:Syllable, b:Syllable)
     {
         return true;
     }
+    // TODO consider just always matching AH and IH... opposites vs. exists
+
+    // hack for OW N and OW M, such as wishBONE vs. synDROME
+    if( IsSamePair( a.nucleus, b.nucleus, 'OW_N', 'OW_M' ) )
+        return true;
 
     return false;
 }
@@ -292,6 +315,9 @@ function ScoreWords(a:String, b:String)
         {
             var score = ScorePronuns(aPro, bPro);
             maxScore = Mathf.Max( score, maxScore );
+
+            if( debug )
+                Debug.Log(a+" ("+ProToString(aPro)+") "+b+" ("+ProToString(bPro)+") = "+score);
         }
     }
     return maxScore;
@@ -382,6 +408,8 @@ function RunTestCases()
     
     TestScoreWords('obsessions', 'recession', 2.5);
     TestScoreWords('obsessions', 'recessions', 3.0);
+    
+    TestScoreWords('wishbone', 'syndrome', 1.0);
 
     Debug.Log('-- Tests done --');
 }
