@@ -8,7 +8,10 @@ var debug = false;
 
 private var proDict:Dictionary.<String, String[]> = null;
 private var validPromptWords:List.<String> = null;
+private var easyPromptWords:List.<String> = new List.<String>();
+private var singleSyllableWords:List.<String> = new List.<String>();
 private var validAnswerWords:HashSet.<String> = null;
+private var difficultyClasses:Dictionary.<String, HashSet.<String> > = new Dictionary.<String, HashSet.<String> >();
 
 static public var main:RhymeScorer;
 
@@ -95,7 +98,7 @@ function ParseCMUDatabase( lines:String[] )
         db.Add( key, phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
     }
 
-    Debug.Log("added "+db.Count+" words to pronun db");
+    Debug.Log("Parsed "+db.Count+" words from CMU DB");
 
     return db;
 }
@@ -297,7 +300,7 @@ function IsTooSimilar( a:String, b:String )
 
 function ScoreWords(a:String, b:String)
 {
-    if( !GetIsWord(a) || !GetIsWord(b) )
+    if( !IsValidAnswer(a) || !IsValidAnswer(b) )
         return 0.0;
 
     if( IsTooSimilar(a, b) )
@@ -414,13 +417,20 @@ function RunTestCases()
     Debug.Log('-- Tests done --');
 }
 
-function GetRandomPromptWord()
+function GetRandomPromptWord(difficulty:int)
 {
-    var i = Random.Range(0, validPromptWords.Count);
-    return validPromptWords[i];
+    var list = validPromptWords;
+
+    if( difficulty == 0 )
+        list = easyPromptWords;
+    else if( difficulty == 1 )
+        list = singleSyllableWords;
+
+    var i = Random.Range(0, list.Count);
+    return list[i];
 }
 
-function GetIsWord(word:String)
+function IsValidAnswer(word:String)
 {
     return validAnswerWords.Contains(word);
 }
@@ -433,8 +443,17 @@ function ComputePromptEasiness(prompt:String)
     var score = 0.0;
     var highestScore = 0.0;
     var bestWord = '';
+
+    var ticks = 0;
     for( var other in validPromptWords )
     {
+        ticks++;
+        if( ticks % 1000 == 0 )
+        {
+            Debug.Log(prompt+" "+(1.0*ticks/validPromptWords.Count*100));
+            yield;
+        }
+
         if( other != prompt )
         {
             var s = ScoreWords(prompt, other);
@@ -478,11 +497,11 @@ function Awake()
                 && key.IndexOf(".") == -1
           )
         {
-            // do not give proper nouns as prompts
+            // Avoid giving uncommon words as prompts
             if( mobyWordSet.Contains(key) )
                 validPromptWords.Add(key);
 
-            // But allow answers to be proper nouns
+            // But allow the user to answer with less common words
             validAnswerWords.Add(key);
         }
     }
@@ -501,11 +520,92 @@ function Awake()
     //ComputePromptEasiness('apostrophe');
     //ComputePromptEasiness('asparagus');
     //ComputePromptEasiness('hedgehog');
+    StartCoroutine(ComputePromptEasiness('wolf'));
+    StartCoroutine(ComputePromptEasiness('hole'));
+}
+
+function ComputeDifficultyGroups()
+{
+    var count = 0;
+    for( var word in validPromptWords )
+    {
+        var pros = GetPronunsForWord(word);
+        var isSingleSyl = false;
+
+        for( var pro in pros )
+        {
+            count++;
+            if( count % 10000 == 0 )
+            {
+                Debug.Log("classified approx. "+(1.0*count/validPromptWords.Count*100)+"%");
+                yield;
+            }
+
+            var syls = Phos2Syls( pro );
+            // put them in buckets using the last nucleus
+
+            if( syls.Count > 1 )
+                // TEMP skip these for now..
+                continue;
+
+            isSingleSyl = true;
+
+            if( syls.Count == 0 )
+            {
+                Debug.Log("WARNING: '"+word+"' has a blank entry");
+                continue;
+            }
+
+            var key = syls[ syls.Count-1 ].nucleus + syls[syls.Count-1].coda;
+
+            if( !difficultyClasses.ContainsKey(key) )
+                difficultyClasses.Add( key, new HashSet.<String>() );
+
+            difficultyClasses[key].Add(word);
+
+        }
+
+        if(isSingleSyl)
+            singleSyllableWords.Add(word);
+    }
+
+    //----------------------------------------
+    //  Sort by hashset count
+    //----------------------------------------
+
+    var sortedClasses = new List.< HashSet.<String> >();
+    for( var diffClass in difficultyClasses.Values )
+        sortedClasses.Add(diffClass);
+
+
+    //----------------------------------------
+    //  Find the largest class
+    //----------------------------------------
+    var largestClass:HashSet.<String> = null;
+    for( var diffClass in difficultyClasses.Values )
+    {
+        if( largestClass == null || diffClass.Count > largestClass.Count )
+            largestClass = diffClass;
+    }
+
+    Debug.Log("First 200/"+largestClass.Count+" words of the largest diff class");
+    var printed = 0;
+    for( var word in largestClass )
+    {
+        printed++;
+        if( printed >= 200 )
+            break;
+        Debug.Log(word);
+    }
+
+    easyPromptWords.Clear();
+    for( var word in largestClass )
+        easyPromptWords.Add(word);
 }
 
 function Start()
 {
-
+    StartCoroutine( ComputeDifficultyGroups() );
 }
 
 function Update()

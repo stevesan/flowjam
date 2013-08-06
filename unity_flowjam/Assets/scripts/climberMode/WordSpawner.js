@@ -7,6 +7,7 @@ var wordPrefab:GameObject;
 var width = 20.0;
 var height = 20.0;
 var wordColor = Color.white;
+var difficulty = 0;
 
 var nearFontSize = 32;
 var farFontSize = 16;
@@ -62,7 +63,7 @@ private function CreateEntry(wsPos:Vector3)
 
     var entry = new WordEntry();
     entry.pos = wsPos;
-    entry.word = RhymeScorer.main.GetRandomPromptWord();
+    entry.word = RhymeScorer.main.GetRandomPromptWord(difficulty);
     entry.object = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
     entry.object.SetActive(true);
     entry.object.name = "word:"+entry.word;
@@ -77,6 +78,8 @@ private function CreateEntry(wsPos:Vector3)
 function Reset(rowRadius:int, colRadius:int)
 {
     Clear();
+
+    Random.seed = Mathf.RoundToInt(Time.time*100000);
 
     var tiler = ClimberGrid.mainTiler;
     var tiles = tiler.GetTiles();

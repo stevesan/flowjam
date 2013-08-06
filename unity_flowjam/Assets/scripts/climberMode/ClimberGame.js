@@ -14,8 +14,8 @@ var wheel:HexWheel;
 var answerDisplayPrefab:GameObject;
 var answerDisplayColor = Color.red;
 var selectedPromptColor = Color.yellow;
-var gsAnswerDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
-var gsFeedbackDisplayOffset:Vector3 = Vector3(0, -1.0, 0);
+var answerOffsetPixels:Vector3 = Vector3(0, 24, 0);
+var feedbackOffsetPixels:Vector3 = Vector3(0, -24, 0);
 
 public var answerDisplay:GUIText;
 public var feedbackDisplay:GUIText;
@@ -58,10 +58,12 @@ private class GameMode
         if( activeEntry != null )
         {
             game.answerDisplay.text = game.inputMgr.GetInput()+"_";
-            game.answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + game.gsAnswerDisplayOffset;
+            game.answerDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos)
+                + Utils.PixelsToGUIOffset(game.answerOffsetPixels);
 
             game.feedbackDisplay.text = feedbackMsg;
-            game.feedbackDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos) + game.gsFeedbackDisplayOffset;
+            game.feedbackDisplay.transform.position = Utils.WorldToGUIPoint(activeEntry.pos)
+                + Utils.PixelsToGUIOffset(game.feedbackOffsetPixels);
         }
         else
         {
@@ -87,7 +89,7 @@ private class GameMode
             {
                 feedbackMsg = "RHYME?";
             }
-            else if( !RhymeScorer.main.GetIsWord(input) )
+            else if( !RhymeScorer.main.IsValidAnswer(input) )
             {
                 feedbackMsg = "Not a word";
             }
@@ -416,12 +418,14 @@ function GetIsPlaying()
 
 function OnInputCharacter()
 {
-    gameMode.OnInputCharacter();
+    if( gameMode != null )
+        gameMode.OnInputCharacter();
 }
 
 function OnInputEnter()
 {
-    gameMode.OnInputEnter();
+    if( gameMode != null )
+        gameMode.OnInputEnter();
 }
 
 function OnHitKillZone()

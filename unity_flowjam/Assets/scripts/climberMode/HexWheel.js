@@ -6,7 +6,7 @@
 
 var numberPrefab:GameObject;
 var color = Color.white;
-var gsOffset = Vector3(0,0.3,0);
+var offsetPixels = Vector2(0,50);
 
 var hidden = -1;
 
@@ -37,7 +37,11 @@ function LateUpdate()
                     && WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
             {
                 var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( nbor.i, nbor.j );
-                numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos) + gsOffset;
+                var gsOffset = offsetPixels;
+                gsOffset.x /= Screen.width;
+                gsOffset.y /= Screen.height;
+                numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos)
+                    + Utils.PixelsToGUIOffset(offsetPixels);
                 numbers[k].SetActive(true);
             }
             else
