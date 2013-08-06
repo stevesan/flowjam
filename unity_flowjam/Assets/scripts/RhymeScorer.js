@@ -6,7 +6,20 @@ var cmuDatabase:TextAsset;
 var mobyWordList:TextAsset;
 var debug = false;
 
-private var proDict:Dictionary.<String, String[]> = null;
+class Syllable
+{
+    var nucleus:String; // the vowel part, such as the "om" in "homes"
+    var coda:String;    // the ending part, such as the "Z" in "homes"
+
+    function Syllable()
+    {
+        this.nucleus = '';
+        this.coda = '';
+    }
+};
+
+// Entry-to-syllables table. An entry is a word, but may be a variant, like close vs. close(1)
+private var proDict:Dictionary.<String, List.<Syllable> > = null;
 private var validPromptWords:List.<String> = null;
 private var easyPromptWords:List.<String> = new List.<String>();
 private var singleSyllableWords:List.<String> = new List.<String>();
@@ -45,7 +58,7 @@ class ScoreInfo
 //----------------------------------------
 //  
 //----------------------------------------
-function ProToString( phos:String[] )
+function ProToString( phos:List.<Syllable> )
 {
     var s = "";
     for( var pho in phos )
@@ -60,9 +73,7 @@ function ProToString( phos:String[] )
 function ParseMobyWordList( lines:String[] )
 {
     for( line in lines )
-    {
         mobyWordSet.Add(line.Trim());
-    }
 
     Debug.Log('parsed '+mobyWordSet.Count+' words from Moby list');
 }
@@ -83,7 +94,7 @@ function CMUKey2Word(key:String)
 
 function ParseCMUDatabase( lines:String[] )
 {
-    var db = new Dictionary.<String, String[]>();
+    var db = new Dictionary.<String, List.<Syllable> >();
 
     for( line in lines )
     {
@@ -95,25 +106,15 @@ function ParseCMUDatabase( lines:String[] )
         }
         var key = parts[0].ToLower().Trim();
         var phos = parts[1].Trim();
-        db.Add( key, phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
+        var syls = Phos2Syls( phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
+        Utils.Assert( syls.Count > 0, line );
+        db.Add( key, syls );
     }
 
     Debug.Log("Parsed "+db.Count+" words from CMU DB");
 
     return db;
 }
-
-class Syllable
-{
-    var nucleus:String; // the vowel part, such as the "om" in "homes"
-    var coda:String;    // the ending part, such as the "Z" in "homes"
-
-    function Syllable()
-    {
-        this.nucleus = '';
-        this.coda = '';
-    }
-};
 
 function GetLast( list:List.<Syllable> ) { return list[list.Count-1]; }
 function GetLast( s:String ) { return s[s.length-1]; }
@@ -229,11 +230,8 @@ function NucleiiMatch(a:Syllable, b:Syllable)
 //----------------------------------------
 //  All sorts of special-cases here..
 //----------------------------------------
-function ScorePronuns( aPhos:String[], bPhos:String[] )
+function ScorePronuns( aSyls:List.<Syllable>, bSyls:List.<Syllable> )
 {
-    var aSyls = Phos2Syls(aPhos);
-    var bSyls = Phos2Syls(bPhos);
-
     var score = 0.0;
     var n = Mathf.Min( aSyls.Count, bSyls.Count );
     for( var i = 0; i < n; i++ )
@@ -272,10 +270,10 @@ function ScorePronuns( aPhos:String[], bPhos:String[] )
     return score;
 }
 
-function GetPronunsForWord(word:String)
+function GetPronunsForWord(word:String) : List.< List.<Syllable> >
 {
     word = word.ToLower();
-    var pronuns = new List.<String[]>();
+    var pronuns = new List.< List.<Syllable> >();
     pronuns.Add( proDict[word] );
 
     var i = 2;
@@ -312,15 +310,15 @@ function ScoreWords(a:String, b:String)
 
     // get max score of all unique pairings
     var maxScore = 0.0;
-    for( var aPro in aPros )
+    for( var aSyls in aPros )
     {
-        for( var bPro in bPros )
+        for( var bSyls in bPros )
         {
-            var score = ScorePronuns(aPro, bPro);
+            var score = ScorePronuns(aSyls, bSyls);
             maxScore = Mathf.Max( score, maxScore );
 
             if( debug )
-                Debug.Log(a+" ("+ProToString(aPro)+") "+b+" ("+ProToString(bPro)+") = "+score);
+                Debug.Log(a+" ("+ProToString(aSyls)+") "+b+" ("+ProToString(bSyls)+") = "+score);
         }
     }
     return maxScore;
@@ -472,6 +470,13 @@ function Awake()
 {
     main = this;
 
+    // Static data that we use
+    for( var i = 0; i < VOWEL_PHONEMES.length; i++ )
+        vowelSet.Add(VOWEL_PHONEMES[i]);
+
+    for( i = 0; i < SYLLABIC_CONSONANTS.length; i++ )
+        sylConSet.Add(SYLLABIC_CONSONANTS[i]);
+
     //----------------------------------------
     //  Parse database into dictionary
     //----------------------------------------
@@ -508,13 +513,6 @@ function Awake()
 
     Debug.Log('prompt list has '+validPromptWords.Count+ ' words');
 
-    for( var i = 0; i < VOWEL_PHONEMES.length; i++ )
-        vowelSet.Add(VOWEL_PHONEMES[i]);
-
-    for( i = 0; i < SYLLABIC_CONSONANTS.length; i++ )
-        sylConSet.Add(SYLLABIC_CONSONANTS[i]);
-
-
     RunTestCases();
 
     //ComputePromptEasiness('apostrophe');
@@ -532,7 +530,7 @@ function ComputeDifficultyGroups()
         var pros = GetPronunsForWord(word);
         var isSingleSyl = false;
 
-        for( var pro in pros )
+        for( var syls in pros )
         {
             count++;
             if( count % 10000 == 0 )
@@ -540,9 +538,6 @@ function ComputeDifficultyGroups()
                 Debug.Log("classified approx. "+(1.0*count/validPromptWords.Count*100)+"%");
                 yield;
             }
-
-            var syls = Phos2Syls( pro );
-            // put them in buckets using the last nucleus
 
             if( syls.Count > 1 )
                 // TEMP skip these for now..
