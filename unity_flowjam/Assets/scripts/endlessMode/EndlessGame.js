@@ -16,6 +16,7 @@ static var instance:EndlessGame = null;
 var promptDisplay:GUIText;
 var answerDisplay:GUIText;
 var feedbackDisplay:GUIText;
+var difficulty = 0;
 
 //----------------------------------------
 //  Resources
@@ -61,7 +62,7 @@ private function ScoreWords(a:String, b:String)
 
 private function PresentNewWord()
 {
-    promptDisplay.text = RhymeScorer.main.GetRandomPromptWord();
+    promptDisplay.text = RhymeScorer.main.GetRandomPromptWord(difficulty);
     answerWord = '';
     feedbackDisplay.text = 'ENTER A WORD THAT RHYMES!!\nOr blank to skip';
     feedbackDisplay.material.color = Color(1.0, 1.0, 1.0, 1.0);
@@ -80,7 +81,7 @@ function IsTooSimilar( prompt:String, answer:String )
 
 private function UpdateAllDisplays()
 {
-    if( RhymeScorer.main.GetIsWord( answerWord ) )
+    if( RhymeScorer.main.IsValidAnswer( answerWord ) )
     {
         if( IsTooSimilar( promptDisplay.text, answerWord ) )
         {

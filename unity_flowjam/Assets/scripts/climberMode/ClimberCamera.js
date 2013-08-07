@@ -21,7 +21,7 @@ function Start () {
 
 }
 
-function LateUpdate()
+function Update()
 {
     if( follow )
     {

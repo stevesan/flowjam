@@ -7,6 +7,10 @@ var wordPrefab:GameObject;
 var width = 20.0;
 var height = 20.0;
 var wordColor = Color.white;
+var difficulty = 0;
+
+var nearFontSize = 32;
+var farFontSize = 16;
 
 function Awake()
 {
@@ -55,12 +59,14 @@ function GetEntry( i:int, j:int )
 
 private function CreateEntry(wsPos:Vector3)
 {
+    wordPrefab.SetActive(false);
+
     var entry = new WordEntry();
     entry.pos = wsPos;
-    entry.word = RhymeScorer.main.GetRandomPromptWord();
+    entry.word = RhymeScorer.main.GetRandomPromptWord(difficulty);
     entry.object = Instantiate( wordPrefab, Utils.WorldToGUIPoint(entry.pos), wordPrefab.transform.rotation );
     entry.object.SetActive(true);
-    wordPrefab.SetActive(false);
+    entry.object.name = "word:"+entry.word;
 
     var t = entry.object.GetComponent(GUIText);
     t.text = entry.word;
@@ -72,6 +78,8 @@ private function CreateEntry(wsPos:Vector3)
 function Reset(rowRadius:int, colRadius:int)
 {
     Clear();
+
+    Random.seed = Mathf.RoundToInt(Time.time*100000);
 
     var tiler = ClimberGrid.mainTiler;
     var tiles = tiler.GetTiles();
@@ -93,7 +101,7 @@ function OnGameOver()
     Clear();
 }
 
-function OnGUI()
+function LateUpdate()
 {
     // Make sure words move, to stay in the same world position
     for( var i = 0; i < entries.GetCount(); i++ )
@@ -101,7 +109,27 @@ function OnGUI()
         var entry = entries[i];
 
         if( entry != null )
+        {
             entry.object.transform.position = Utils.WorldToGUIPoint(entry.pos);
+            entry.object.guiText.fontSize = farFontSize;
+        }
+    }
+
+    //----------------------------------------
+    //  Make words near player larger
+    //----------------------------------------
+    if( ClimberGame.main.GetIsPlaying() )
+    {
+        i = ClimberGuy.main.GetRow();
+        var j = ClimberGuy.main.GetCol();
+
+        for( var k = 0; k < 6; k++ )
+        {
+            var nbor = HexTiler.GetNbor( i, j, k );
+            entry = GetEntry( nbor.i, nbor.j );
+            if( entry != null )
+                entry.object.guiText.fontSize = nearFontSize;
+        }
     }
 
 }

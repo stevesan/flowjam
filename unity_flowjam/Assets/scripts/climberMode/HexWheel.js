@@ -1,8 +1,14 @@
 #pragma strict
 
+//----------------------------------------
+//  The 1-6 keys that show around the player
+//----------------------------------------
+
 var numberPrefab:GameObject;
 var color = Color.white;
-var gsOffset = Vector3(0,0.3,0);
+var offsetPixels = Vector2(0,50);
+
+var hidden = -1;
 
 private var numbers = new List.<GameObject>();
 
@@ -16,7 +22,7 @@ function Start()
     }
 }
 
-function OnGUI()
+function LateUpdate()
 {
     if( ClimberGame.main.GetIsPlaying() )
     {
@@ -27,10 +33,15 @@ function OnGUI()
         {
             var nbor = HexTiler.GetNbor( i, j, k );
 
-            if( WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
+            if( k != hidden
+                    && WordSpawner.main.GetEntry( nbor.i, nbor.j ) != null )
             {
                 var wsPos = ClimberGrid.mainTiler.GetGlobalPosition( nbor.i, nbor.j );
-                numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos) + gsOffset;
+                var gsOffset = offsetPixels;
+                gsOffset.x /= Screen.width;
+                gsOffset.y /= Screen.height;
+                numbers[k].transform.position = Utils.WorldToGUIPoint(wsPos)
+                    + Utils.PixelsToGUIOffset(offsetPixels);
                 numbers[k].SetActive(true);
             }
             else

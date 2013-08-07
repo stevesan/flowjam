@@ -14,6 +14,7 @@ private var moveStartPos:Vector3;
 private var moveStartTime:float;
 private var moveDir:Vector3;
 private var moveDistance = 0.0f;
+private var wsGoalPos:Vector3;
 
 private var currRow = 0;
 private var currCol = 0;
@@ -55,34 +56,21 @@ function MoveTo( i:int, j:int, gripBonus:float, teleport:boolean )
     currRow = i;
     currCol = j;
 
-    var goalPos = GetHexes().GetGlobalPosition( i, j );
-    goalPos.z = origPos.z;
-    var delta = goalPos - transform.position;
+    wsGoalPos = GetHexes().GetGlobalPosition( i, j );
+    wsGoalPos.z = origPos.z;
 
-    if( teleport || delta.magnitude <= 0 )
+    if( teleport )
     {
-        transform.position = goalPos;
+        transform.position = wsGoalPos;
         state = "idle";
     }
     else
     {
-        moveStartPos = transform.position;
-        moveStartTime = Time.time;
-        moveDir = delta.normalized;
-        moveDistance = delta.magnitude;
         state = "moving";
         SendMessage("OnMoveBegin");
     }
 
     gripSecs = defaultGripSecs + gripBonus;
-}
-
-function DoMove( dir:Vector3, distance:float )
-{
-    moveStartPos = transform.position;
-    moveStartTime = Time.time;
-    moveDir = dir;
-    moveDistance = distance;
 }
 
 function OnGameStart()
@@ -112,13 +100,12 @@ function Update()
     {
         if( state == "moving" )
         {
-            var moveDuration = moveDistance / moveSpeed;
-
-            if( (moveStartTime + moveDuration) > Time.time )
-                transform.position += moveDir * moveSpeed * Time.deltaTime;
-            else
+            var maxDist = moveSpeed * Time.deltaTime;
+            var delta = wsGoalPos - transform.position;
+            transform.position += Vector3.ClampMagnitude( delta, maxDist );
+            if( delta.magnitude < maxDist )
             {
-                transform.position = moveStartPos + moveDir*moveDistance;
+                transform.position = wsGoalPos;
                 OnMoveEnd();
             }
         }
