@@ -1,24 +1,25 @@
 TASK LIST:
 
-- "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
-    most like Spelltower's puzzle mode
+- difficulty rankings..must pre-compute.
+    - compute difficulty of words by mining the database for total score?
+    mine wikipedia for frequency?
+- audio feedback as you type
+    need better sounds too (can still use the cha-ching sounds for ENTER)
 
-ways to make more challenging:
-
-    * have some cells REQUIRE 2-syls? like spelltower's numbered cells!!!
-        this alleviates the "single-syllable cheap climb" problem
+- tweaks for all modes:
     * disallow reusing same words, like Spelltower.
         this creates the "1st & goal" effect
-    * jump two cells for 2-syl rhymes?
     * time-trials - get to the top ASAP
 
+- action mode tweaks:
+    word-less rocks
+    past a certain height, words will NOT respawn?
+    have some cells REQUIRE 2-syls? like spelltower's numbered cells!
+        this alleviates the "single-syllable cheap climb" problem
 
 - "climb" vs mode, could be turn-based hot-seat: like relax mode, start on opposite ends of wall, goal is to get most points
     dynamics: trap the other player
     could be turn-based or real time!
-
-- "action" mode: lava, grip, rocks, hazards, etc. Goal is to get to the top. Also track high score
-    past a certain height, words will NOT respawn
 
 - "speed" vs mode: first one to get 100 points wins, but you both choose from the same pool of words. once someone rhymes a word at all, it is removed from the "pool".
     want to recreate the feeling of the card game Speed
@@ -28,10 +29,6 @@ ways to make more challenging:
     switch rows by pressing number key, type and enter to submit
     when one player submits a rhyming word, they get the point and the word changes on that row
     first one to 50 points wins
-
-- need to reverse pitch direction of sounds. better --> higher pitch
-- give sounds AS feedback is given? ie. whenever score goes up, play a sound?
-    need huge fx for high bonus levels
 
 - endless mode:
     points per minute
@@ -48,11 +45,8 @@ ways to make more challenging:
     definitely need:
         timed mode
         turn-based
-
     Sequence-like battle mode?
-
     PvP mode? see who gets the most number of points for a single word in 1 minute?
-    
     PvP - each person picks 10 words, other person tries to get as many points for any of those words
 
 - need to see what kind of words are in the Moby list but not in CMU
@@ -60,10 +54,6 @@ ways to make more challenging:
 - bonus for 2 greats in a row?
     well..sometimes you only get single-syllabe words though.
     DO NOT PROMPT SINGLE-SYLLABLE WORDS?
-
-- compute difficulty of words by mining the database for total score?
-- frequency: would be good to avoid super obscure words
-    mine wikipedia?
 
 - alliteration bonus!
 - allow user to stay on the same word? coming up with multiple rhymes could be fun..
@@ -75,6 +65,8 @@ ways to make more challenging:
     more rhyme score == more bar.
     so, no numbers, just purely visual feedback
     you can skip words, but you sacrifice some time (may be 0.5s)
+    CANCELED in favor of "wall of words with grip time" design
+        but I do like the "fill up" feature of this...gives players mid-term goals
 
 LOW PRIORITY:
 
@@ -176,3 +168,7 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 - prevent lame rhymes and just repeating the word
     done, just checking substrings
 - don't drop when they hit enter - flash the error instead
+- "relax" mode: predefined wall, no lava or grip time, but words will not respawn. So you have to optimize your path, game ends when you're stuck.
+    most like Spelltower's puzzle mode
+- "action" mode: lava, grip, rocks, hazards, etc. Goal is to get to the top. Also track high score
+    * jump two cells for 2-syl rhymes?
