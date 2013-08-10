@@ -2,9 +2,11 @@
 
 public static var main:ClimberCamera;
 
-var yOffset = 5.0f;
+var offset = Vector3.zero;
+var smoothTime = 0.5f;
 
 private var follow = true;
+private var dampVelocity:Vector3;
 
 function Awake()
 {
@@ -25,8 +27,9 @@ function Update()
 {
     if( follow )
     {
-        transform.position.x = ClimberGuy.main.transform.position.x;
-        transform.position.y = ClimberGuy.main.transform.position.y;
-        transform.position.y += yOffset;
+        var origZ = transform.position.z;
+        var targetPos = ClimberGuy.main.transform.position + offset;
+        transform.position = Vector3.SmoothDamp( transform.position, targetPos, dampVelocity, smoothTime );
+        transform.position.z = origZ;
     }
 }

@@ -3,8 +3,18 @@
 import System.Collections.Generic;
 
 var cmuDatabase:TextAsset;
-var mobyWordList:TextAsset;
+var wikipediaFreqDatabase:TextAsset;
+var banList:TextAsset;
+
 var debug = false;
+var statusText:GUIText;
+
+class DifficultyLevel
+{
+    public var minFrequency = 100000;
+    public var maxSyllables = 2;
+}
+public var difficultyLevels = new List.<DifficultyLevel>();
 
 class Syllable
 {
@@ -16,15 +26,25 @@ class Syllable
         this.nucleus = '';
         this.coda = '';
     }
+
+    function ToString()
+    {
+        return this.nucleus + ","+this.coda;
+    }
 };
 
 // Entry-to-syllables table. An entry is a word, but may be a variant, like close vs. close(1)
-private var proDict:Dictionary.<String, List.<Syllable> > = null;
-private var validPromptWords:List.<String> = null;
-private var easyPromptWords:List.<String> = new List.<String>();
-private var singleSyllableWords:List.<String> = new List.<String>();
-private var validAnswerWords:HashSet.<String> = null;
-private var difficultyClasses:Dictionary.<String, HashSet.<String> > = new Dictionary.<String, HashSet.<String> >();
+private var proDict = new Dictionary.<String, List.<Syllable> >();
+
+// The wikipedia mining results
+private var word2freq = new Dictionary.<String, int>();
+
+// Words the player is allowed to enter
+private var validAnswerWords = HashSet.<String>();
+private var difficulty2words = new List.< List.<String> >();
+private var bannedWords = new HashSet.<String>();
+
+private var ready = false;
 
 static public var main:RhymeScorer;
 
@@ -40,6 +60,7 @@ static private var VOWEL_PHONEMES = [
 static private var SYLLABIC_CONSONANTS = [ "L", "M", "N", "NG", "R" ];
 
 private var mobyWordSet = new HashSet.<String>();
+
 private var vowelSet = new HashSet.<String>();
 private var sylConSet = new HashSet.<String>();
 
@@ -47,6 +68,8 @@ static function Get()
 {
     return main;
 }
+
+function GetIsReady() { return ready; }
 
 class ScoreInfo
 {
@@ -58,24 +81,47 @@ class ScoreInfo
 //----------------------------------------
 //  
 //----------------------------------------
-function ProToString( phos:List.<Syllable> )
+function ProToString( syls:List.<Syllable> )
 {
     var s = "";
-    for( var pho in phos )
-        s += pho + " ";
+    for( var syl in syls )
+        s += syl.ToString() + " ";
     return s;
 }
 
-
-//----------------------------------------
-//  Just adds each word to the word hash set
-//----------------------------------------
-function ParseMobyWordList( lines:String[] )
+function ParseBanList( lines:String[] )
 {
-    for( line in lines )
-        mobyWordSet.Add(line.Trim());
+    bannedWords.Clear();
 
-    Debug.Log('parsed '+mobyWordSet.Count+' words from Moby list');
+    for( line in lines )
+        bannedWords.Add(line.ToLower().Trim());
+
+    Debug.Log('parsed '+bannedWords.Count+' banned words');
+}
+
+function ParseWordFrequencyCSV( lines:String[] )
+{
+    word2freq.Clear();
+
+    var count = 0;
+    for( line in lines )
+    {
+        count++;
+        if( count % 5000 == 0 )
+        {
+            statusText.text = "Parsing Frequency database.."+ (1.0*count/lines.Length*100).ToString("0.00")+"%";
+            yield;
+        }
+
+        var parts = line.Split(','[0]);
+
+        if( parts.length >= 2 )
+        {
+            var word = parts[0].ToLower().Trim();
+            var freq = parseInt(parts[1].Trim());
+            word2freq.Add( word, parseInt(freq) );
+        }
+    }
 }
 
 //----------------------------------------
@@ -94,10 +140,18 @@ function CMUKey2Word(key:String)
 
 function ParseCMUDatabase( lines:String[] )
 {
-    var db = new Dictionary.<String, List.<Syllable> >();
+    proDict.Clear();
 
+    var count = 0;
     for( line in lines )
     {
+        count++;
+        if( count % 5000 == 0 )
+        {
+            statusText.text = "Parsing CMU database.."+ (1.0*count/lines.Length*100).ToString("0.00")+"%";
+            yield;
+        }
+
 		var parts = line.Split('\t'[0]);
         if( parts.length < 2 )
         {
@@ -108,12 +162,10 @@ function ParseCMUDatabase( lines:String[] )
         var phos = parts[1].Trim();
         var syls = Phos2Syls( phos.Split([' '], System.StringSplitOptions.RemoveEmptyEntries) );
         Utils.Assert( syls.Count > 0, line );
-        db.Add( key, syls );
+        proDict.Add( key, syls );
     }
 
-    Debug.Log("Parsed "+db.Count+" words from CMU DB");
-
-    return db;
+    Debug.Log("Parsed "+proDict.Count+" words from CMU DB");
 }
 
 function GetLast( list:List.<Syllable> ) { return list[list.Count-1]; }
@@ -340,7 +392,7 @@ function ScoreWordsWithBonus(a:String, b:String)
 function TestScoreWords(a:String, b:String, expectedScore:float)
 {
     var score = ScoreWords(a, b);
-    Utils.Assert(score == expectedScore);
+    Utils.Assert(score == expectedScore, "actual = "+score+" expected = "+expectedScore);
 }
 
 function RunTestCases()
@@ -411,19 +463,15 @@ function RunTestCases()
     TestScoreWords('obsessions', 'recessions', 3.0);
     
     TestScoreWords('wishbone', 'syndrome', 1.0);
+    TestScoreWords('poor', 'floor', 1.0);
+    TestScoreWords('list', 'jist', 1.5);
 
     Debug.Log('-- Tests done --');
 }
 
 function GetRandomPromptWord(difficulty:int)
 {
-    var list = validPromptWords;
-
-    if( difficulty == 0 )
-        list = easyPromptWords;
-    else if( difficulty == 1 )
-        list = singleSyllableWords;
-
+    var list = difficulty2words[difficulty];
     var i = Random.Range(0, list.Count);
     return list[i];
 }
@@ -433,41 +481,9 @@ function IsValidAnswer(word:String)
     return validAnswerWords.Contains(word);
 }
 
-function ComputePromptEasiness(prompt:String)
-{
-    Utils.Assert( validPromptWords.Contains(prompt) );
-
-    // go through all valid answers and compute total rhyme score
-    var score = 0.0;
-    var highestScore = 0.0;
-    var bestWord = '';
-
-    var ticks = 0;
-    for( var other in validPromptWords )
-    {
-        ticks++;
-        if( ticks % 1000 == 0 )
-        {
-            Debug.Log(prompt+" "+(1.0*ticks/validPromptWords.Count*100));
-            yield;
-        }
-
-        if( other != prompt )
-        {
-            var s = ScoreWords(prompt, other);
-            score += s;
-            if( s > highestScore )
-            {
-                highestScore = s;
-                bestWord = other;
-            }
-        }
-    }
-    Debug.Log("final total score for "+prompt+" = "+score+" best = "+bestWord);
-}
-
 function Awake()
 {
+    Utils.Assert( main == null );
     main = this;
 
     // Static data that we use
@@ -476,25 +492,45 @@ function Awake()
 
     for( i = 0; i < SYLLABIC_CONSONANTS.length; i++ )
         sylConSet.Add(SYLLABIC_CONSONANTS[i]);
+}
 
+function Start()
+{
     //----------------------------------------
     //  Parse database into dictionary
     //----------------------------------------
+
     var lines = cmuDatabase.text.Split('\n'[0]);
-    proDict = ParseCMUDatabase(lines);
+    yield ParseCMUDatabase(lines);
 
-    // Parse in moby word list
-    ParseMobyWordList( mobyWordList.text.Split('\n'[0]) );
-    Utils.Assert( mobyWordSet.Contains('close') );
+    lines = wikipediaFreqDatabase.text.Split('\n'[0]);
+    yield ParseWordFrequencyCSV(lines);
+
+    lines = banList.text.Split('\n'[0]);
+    ParseBanList(lines);
 
     //----------------------------------------
-    //  Decide which words are allowed as prompts and answers
+    //  Extract disjunct subsets of the CMU database entries to use as prompt words.
     //----------------------------------------
-    validPromptWords = new List.<String>();
-    validAnswerWords = new HashSet.<String>();
+    validAnswerWords.Clear();
+
+    var diff = 0;
+
+    difficulty2words.Clear();
+    for( diff = 0; diff < difficultyLevels.Count; diff++ )
+        difficulty2words.Add( new List.<String>() );
+
+    var count = 0;
     for( var key in proDict.Keys )
     {
-        // Ignore variants and words with apostrophes
+        count++;
+        if( count % 10000 == 0 )
+        {
+            statusText.text = "Classifying words.."+ (1.0*count/proDict.Keys.Count*100).ToString("0.00")+"%";
+            yield;
+        }
+
+        // Ignore variants and words with non-alphabetic characters
         if( key.length > 1
                 && key.IndexOf("(") == -1
                 && key.IndexOf("'") == -1
@@ -502,108 +538,34 @@ function Awake()
                 && key.IndexOf(".") == -1
           )
         {
-            // Avoid giving uncommon words as prompts
-            if( mobyWordSet.Contains(key) )
-                validPromptWords.Add(key);
-
-            // But allow the user to answer with less common words
+            // But allow the user to answer with a word despite commonness
             validAnswerWords.Add(key);
+
+            if( key.length > 2  // we tend to get a lot of these...like chemistry elements, heh. discount them completely.
+                    && word2freq.ContainsKey(key)
+                    && !bannedWords.Contains(key) )
+            {
+                var freq = word2freq[key];
+                var syls = proDict[key];
+
+                for( diff = 0; diff < difficultyLevels.Count; diff++ )
+                {
+                    if( freq >= difficultyLevels[diff].minFrequency
+                            && syls.Count <= difficultyLevels[diff].maxSyllables )
+                    {
+                        difficulty2words[diff].Add(key);
+                    }
+                }
+            }
         }
     }
 
-    Debug.Log('prompt list has '+validPromptWords.Count+ ' words');
+    for( diff = 0; diff < difficultyLevels.Count; diff++ )
+        Debug.Log("diff level "+diff+ " has "+difficulty2words[diff].Count+" words");
 
     RunTestCases();
-
-    //ComputePromptEasiness('apostrophe');
-    //ComputePromptEasiness('asparagus');
-    //ComputePromptEasiness('hedgehog');
-    StartCoroutine(ComputePromptEasiness('wolf'));
-    StartCoroutine(ComputePromptEasiness('hole'));
+    ready = true;
+    statusText.text = "";
 }
 
-function ComputeDifficultyGroups()
-{
-    var count = 0;
-    for( var word in validPromptWords )
-    {
-        var pros = GetPronunsForWord(word);
-        var isSingleSyl = false;
 
-        for( var syls in pros )
-        {
-            count++;
-            if( count % 10000 == 0 )
-            {
-                Debug.Log("classified approx. "+(1.0*count/validPromptWords.Count*100)+"%");
-                yield;
-            }
-
-            if( syls.Count > 1 )
-                // TEMP skip these for now..
-                continue;
-
-            isSingleSyl = true;
-
-            if( syls.Count == 0 )
-            {
-                Debug.Log("WARNING: '"+word+"' has a blank entry");
-                continue;
-            }
-
-            var key = syls[ syls.Count-1 ].nucleus + syls[syls.Count-1].coda;
-
-            if( !difficultyClasses.ContainsKey(key) )
-                difficultyClasses.Add( key, new HashSet.<String>() );
-
-            difficultyClasses[key].Add(word);
-
-        }
-
-        if(isSingleSyl)
-            singleSyllableWords.Add(word);
-    }
-
-    //----------------------------------------
-    //  Sort by hashset count
-    //----------------------------------------
-
-    var sortedClasses = new List.< HashSet.<String> >();
-    for( var diffClass in difficultyClasses.Values )
-        sortedClasses.Add(diffClass);
-
-
-    //----------------------------------------
-    //  Find the largest class
-    //----------------------------------------
-    var largestClass:HashSet.<String> = null;
-    for( var diffClass in difficultyClasses.Values )
-    {
-        if( largestClass == null || diffClass.Count > largestClass.Count )
-            largestClass = diffClass;
-    }
-
-    Debug.Log("First 200/"+largestClass.Count+" words of the largest diff class");
-    var printed = 0;
-    for( var word in largestClass )
-    {
-        printed++;
-        if( printed >= 200 )
-            break;
-        Debug.Log(word);
-    }
-
-    easyPromptWords.Clear();
-    for( var word in largestClass )
-        easyPromptWords.Add(word);
-}
-
-function Start()
-{
-    StartCoroutine( ComputeDifficultyGroups() );
-}
-
-function Update()
-{
-
-}

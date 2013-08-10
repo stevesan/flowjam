@@ -1,10 +1,21 @@
 TASK LIST:
 
-- difficulty rankings..must pre-compute.
-    - compute difficulty of words by mining the database for total score?
-    mine wikipedia for frequency?
-- audio feedback as you type
-    need better sounds too (can still use the cha-ching sounds for ENTER)
+- TUTORIAL SEQUENCE:
+    
+    1. Two words rhyme if their syllables are the same. "Fat" rhymes with "cat"
+        Type a word that rhymes with "car":
+    2. You only need to rhyme the last syllable. "Cat" still rhymes with "wombat".
+        Type a two syllable word that rhymes with "make". HINT: "I've made a big [blank]"
+    3. It's OK if the last consonant is different, but you will get less points.
+        "Start" rhymes best with "cart", but it also rhymes with "car" and "card".
+        Type a word that rhymes with "shade", but the last consonant is different. HINT: "[blank] well before drinking!"
+    4. You get more points if you rhyme more syllables!
+        Try to rhyme both syllables of "cigar".
+        HINT: "She sings and plays [blank]"
+    5. Just 2 more rules!
+        1) You can't type a word that's too similar. Type a word that rhymes with "waterbed" and is not "bed". HINT: "[blank], white, and blue!"
+        2) Within a single round, you can't use a word you've used before. Type another word that rhymes with "waterbed" and is not "red".
+    - OK that's it! Have fun.
 
 - tweaks for all modes:
     * disallow reusing same words, like Spelltower.
@@ -172,3 +183,8 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     most like Spelltower's puzzle mode
 - "action" mode: lava, grip, rocks, hazards, etc. Goal is to get to the top. Also track high score
     * jump two cells for 2-syl rhymes?
+- difficulty rankings..must pre-compute.
+    - compute difficulty of words by mining the database for total score?
+    mine wikipedia for frequency?
+- audio feedback as you type
+    need better sounds too (can still use the cha-ching sounds for ENTER)

@@ -29,6 +29,7 @@ private class GameMode
     protected var activeNborNum = -1;
     protected var activeScore = 0.0;
     protected var feedbackMsg = "";
+    var usedWords = new HashSet.<String>();
 
     function SetGame(game:ClimberGame)
     {
@@ -36,7 +37,10 @@ private class GameMode
     }
 
     public function GetHelpText() { return ""; }
-    public function Start() { }
+    public function Start()
+    {
+        usedWords.Clear();
+    }
 
     public function Update()
     {
@@ -86,17 +90,13 @@ private class GameMode
             activeScore = 0;
 
             if( input == "" )
-            {
-                feedbackMsg = "RHYME?";
-            }
+                feedbackMsg = "TYPE!";
             else if( !RhymeScorer.main.IsValidAnswer(input) )
-            {
                 feedbackMsg = "Not a word";
-            }
+            else if( usedWords.Contains(input) )
+                feedbackMsg = "Used before";
             else if( RhymeScorer.main.IsTooSimilar( input, word ) )
-            {
                 feedbackMsg = "Too similar";
-            }
             else
             {
                 activeScore = RhymeScorer.main.ScoreWords( input, word );
@@ -106,7 +106,6 @@ private class GameMode
                 else
                 {
                     var kudos = [ "OK", "Good", "Great", "Amazing", "Impossible" ];
-
                     feedbackMsg = kudos[ Mathf.Ceil(activeScore)-1 ] + " +" + GetLastScore();
                 }
             }
@@ -170,6 +169,7 @@ private class ActionGameMode extends GameMode
 
     public function Start()
     {
+        super.Start();
         SetActiveEntry(null);
         game.words.Reset(999, 999);
         ClimberCamera.main.SetFollow(true);
@@ -234,11 +234,12 @@ public class RaceMode extends GameMode
 
     public function GetHelpText()
     {
-        return "To move, press a number and type a rhyming word.\nReach "+goalHeight+" M as fast as possible!";
+        return "Press a number\nthen type a rhyming word.\nReach the top ASAP!";
     }
 
     public function Start()
     {
+        super.Start();
         SetActiveEntry(null);
         game.words.Reset(999, 999);
         game.climber.SetShowGripSecs(false);
@@ -266,6 +267,10 @@ public class RaceMode extends GameMode
 
         if( activeScore > 0.0 )
         {
+            // do this before we clear the input on move
+            usedWords.Add(game.inputMgr.GetInput());
+            Debug.Log("adding "+game.inputMgr.GetInput());
+
             var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
 
             if( GetIsDoubleMove() && ClimberGrid.mainTiler.GetTiles().GetInRange(doubleNbor) )
@@ -291,8 +296,8 @@ public class RaceMode extends GameMode
         elapsedTime += Time.deltaTime;
 
         var ht = game.climber.transform.position.y - startHeight;
-        game.stateOut.text = "HEIGHT: " + ht.ToString("0.0") + " / "+goalHeight+" M\n";
-        game.stateOut.text += "TIME: " + GetTime().ToString("0.00") + " / " + GetBestTime().ToString("0.00") + " S\n";
+        game.stateOut.text = "HEIGHT: " + (ht/(goalHeight-startHeight)*100).ToString("0")+"%\n";
+        game.stateOut.text += "TIME: " + GetTime().ToString("0.00") + " BEST: " + GetBestTime().ToString("0.00");
         game.centerText.text = "";
 
         if( ht > goalHeight )
@@ -333,6 +338,7 @@ public class RelaxMode extends GameMode
 
     public function Start()
     {
+        super.Start();
         SetActiveEntry(null);
         score = 0;
 
@@ -430,6 +436,7 @@ function OnInputEnter()
 
 function OnHitKillZone()
 {
+    GetComponent(Connectable).TriggerEvent("OnPlayerDie");
     TriggerGameOver();
 }
 
@@ -437,8 +444,6 @@ function TriggerGameOver()
 {
     if( state == "playing" )
     {
-        GetComponent(Connectable).TriggerEvent("OnPlayerDie");
-
         words.OnGameOver();
         lava.OnGameOver();
         ClimberGuy.main.OnGameOver();
@@ -467,34 +472,36 @@ function Update()
 {
     if( state == "startscreen" )
     {
-        centerText.text = "Press a number:\n"
-            + "1. Relax Mode\n"
-            + "2. Action Mode\n"
-            + "3. Race Mode\n"
-            + "4. 1 vs. 1 Mode\n";
+        if( RhymeScorer.main.GetIsReady() )
+        {
+            centerText.text = "Press a number:\n"
+                + "1. Relax Mode\n"
+                + "2. Action Mode\n"
+                + "3. Race Mode\n";
 
-        if( Input.GetKeyDown("1") )
-        {
-            gameMode = relaxMode;
-            state = "helpscreen";
-        }
-        else if( Input.GetKeyDown("2") )
-        {
-            gameMode = new ActionGameMode();
-            state = "helpscreen";
-        }
-        else if( Input.GetKeyDown("3") )
-        {
-            gameMode = raceMode;
-            state = "helpscreen";
-        }
+            if( Input.GetKeyDown("1") )
+            {
+                gameMode = relaxMode;
+                state = "helpscreen";
+            }
+            else if( Input.GetKeyDown("2") )
+            {
+                gameMode = new ActionGameMode();
+                state = "helpscreen";
+            }
+            else if( Input.GetKeyDown("3") )
+            {
+                gameMode = raceMode;
+                state = "helpscreen";
+            }
 
-        if( gameMode != null )
-            gameMode.SetGame(this);
-        /*
-        else if( Input.GetKeyDown("4") )
-            state = "versusStartscreen";
-            */
+            if( gameMode != null )
+                gameMode.SetGame(this);
+        }
+        else
+        {
+            centerText.text = "Please wait..";
+        }
 
         stateOut.text = "";
         answerDisplay.text = "";
