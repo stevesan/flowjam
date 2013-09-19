@@ -1,5 +1,16 @@
 TASK LIST:
 
+- ok, this climbing thing is actually not that fun. i think we need some cooommmmbbbbbbaaaatttttt!!!! yeah, it's not really working the way spelltower and puzzlejuice work. The spelling mechanic
+    is pretty intimately tied to the spatial aspects of those games, and the interest comes from the spelling + spatial reasoning. In my game, they're pretty separated.
+    i think we should try the swarming action game approach! the sight of a word chasing you, but then you smacking it down with a rhyme is pretty funny. there's also a bit of spatial fun,
+    such as going into a cluster of words that rhyme with "cat", then typing "cat" and completely wiping out that cluster. That's something we don't have in the climbing game! Sort of
+    an area-of-effect mechanic.
+    what sort of meaningful powerups/stats could we have? 
+
+
+- consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
+    hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)
+
 - TUTORIAL SEQUENCE:
     
     1. Two words rhyme if their syllables are the same. "Fat" rhymes with "cat"
@@ -9,18 +20,20 @@ TASK LIST:
     3. It's OK if the last consonant is different, but you will get less points.
         "Start" rhymes best with "cart", but it also rhymes with "car" and "card".
         Type a word that rhymes with "shade", but the last consonant is different. HINT: "[blank] well before drinking!"
-    4. You get more points if you rhyme more syllables!
-        Try to rhyme both syllables of "cigar".
-        HINT: "She sings and plays [blank]"
     5. Just 2 more rules!
         1) You can't type a word that's too similar. Type a word that rhymes with "waterbed" and is not "bed". HINT: "[blank], white, and blue!"
         2) Within a single round, you can't use a word you've used before. Type another word that rhymes with "waterbed" and is not "red".
     - OK that's it! Have fun.
 
-- tweaks for all modes:
-    * disallow reusing same words, like Spelltower.
-        this creates the "1st & goal" effect
-    * time-trials - get to the top ASAP
+    later on with more difficulty:
+    4. You get more points if you rhyme more syllables!
+        Try to rhyme both syllables of "cigar".
+        HINT: "She sings and plays [blank]"
+
+- color coding for feedback. put feedback msg above cursor.
+- difficulty: sort words by frequency only. forget about syllables?
+
+- clumps of words. "oh, I can think of a lot of words that rhyme with 'potion'! I'm gonna go to that clump"
 
 - action mode tweaks:
     word-less rocks
@@ -188,3 +201,8 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     mine wikipedia for frequency?
 - audio feedback as you type
     need better sounds too (can still use the cha-ching sounds for ENTER)
+- tweaks for all modes:
+    * disallow reusing same words, like Spelltower.
+        this creates the "1st & goal" effect
+    * time-trials - get to the top ASAP
+        i think this is the best mode.

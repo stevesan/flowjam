@@ -1,5 +1,6 @@
 #pragma strict
-import SteveSharp;
+
+import System.Collections.Generic;
 
 static var main:ClimberGame;
 
@@ -17,6 +18,7 @@ var selectedPromptColor = Color.yellow;
 var answerOffsetPixels:Vector3 = Vector3(0, 24, 0);
 var feedbackOffsetPixels:Vector3 = Vector3(0, -24, 0);
 
+// Only public because GameModes need it
 public var answerDisplay:GUIText;
 public var feedbackDisplay:GUIText;
 private var state = "startscreen";
@@ -273,7 +275,7 @@ public class RaceMode extends GameMode
 
             var doubleNbor = HexTiler.GetNbor( activeNbor.i, activeNbor.j, activeNborNum );
 
-            if( GetIsDoubleMove() && ClimberGrid.mainTiler.GetTiles().GetInRange(doubleNbor) )
+            if( GetIsDoubleMove() && ClimberGrid.mainTiler.GetTiles().IsValid(doubleNbor) )
             {
                 MovePlayer( doubleNbor.i, doubleNbor.j, 0 );
             }
@@ -320,7 +322,7 @@ public class RaceMode extends GameMode
 
     public function GetIsDoubleMove()
     {
-        return activeScore >= 3.0;
+        return activeScore > 1.0;
     }
 }
 var raceMode = new RaceMode();
@@ -472,6 +474,12 @@ function Update()
 {
     if( state == "startscreen" )
     {
+
+        if( Input.GetKeyDown("r") && Application.isEditor )
+        {
+            PlayerPrefs.DeleteKey("bestRaceTime");
+        }
+
         if( RhymeScorer.main.GetIsReady() )
         {
             centerText.text = "Press a number:\n"

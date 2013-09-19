@@ -276,6 +276,14 @@ function NucleiiMatch(a:Syllable, b:Syllable)
     if( IsSamePair( a.nucleus, b.nucleus, 'OW_N', 'OW_M' ) )
         return true;
 
+    // "beer" "here". IY_R is pretty uncommon relative to IH_R
+    if( IsSamePair( a.nucleus, b.nucleus, 'IY_R', 'IH_R' ) )
+        return true;
+
+    // "hen" "been"
+    if( IsSamePair( a.nucleus, b.nucleus, 'EH_N', 'AH_N' ) )
+        return true;
+
     return false;
 }
 
@@ -465,6 +473,8 @@ function RunTestCases()
     TestScoreWords('wishbone', 'syndrome', 1.0);
     TestScoreWords('poor', 'floor', 1.0);
     TestScoreWords('list', 'jist', 1.5);
+    TestScoreWords('here', 'beer', 1.0);
+    TestScoreWords('hen', 'been', 1.0);
 
     Debug.Log('-- Tests done --');
 }

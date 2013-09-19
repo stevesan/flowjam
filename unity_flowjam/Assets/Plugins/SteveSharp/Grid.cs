@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace SteveSharp
 {
+    public class Utility
+    {
+        public static bool Assert( bool cond, string msg = "see callstack in log" )
+        {
+            if( !cond )
+                Debug.LogError("Failed Assert: "+msg);
+            return cond;
+        }
+    }
+
     public class Int2
     {
         public int i, j;
@@ -17,33 +27,33 @@ namespace SteveSharp
     public class Grid<T>
     {
         // Row-major
-        private List<T> data = new List<T>();
+        T[,] data;
 
         public int numCols { get; private set; }
         public int numRows { get; private set; }
 
         public int GetCount() { return numCols * numRows; }
 
-        public void Resize(int numRows, int numCols, T defaultValue )
+        public void Reset(int numRows, int numCols, T defaultValue )
         {
             this.numCols = numCols;
             this.numRows = numRows;
 
-            data.Clear();
+            data = new T[ numRows, numCols ];
 
             for( int i = 0; i < numRows; i++ )
                 for( int j = 0; j < numCols; j++ )
-                    data.Add( defaultValue );
+                    data[i,j] = defaultValue;
         }
 
-        public bool GetInRange( int i, int j )
+        public bool IsValid( int i, int j )
         {
-            return i >= 0 && j >= 0 && GetFlatIndex( i, j ) < data.Count;
+            return i >= 0 && j >= 0 && i < numRows && j < numCols;
         }
 
-        public bool GetInRange( Int2 ij )
+        public bool IsValid( Int2 p )
         {
-            return GetInRange( ij.i, ij.j );
+            return IsValid( p.i, p.j );
         }
 
         public int GetFlatIndex( int i, int j )
@@ -53,18 +63,26 @@ namespace SteveSharp
 
         public void Set( int i, int j, T value )
         {
-            if( !GetInRange(i,j) )
+            if( !Utility.Assert( IsValid(i,j), "Grid.Set: indices out of range" ) )
                 return;
             else
-                data[ GetFlatIndex(i,j) ] = value;
+                data[i, j] = value;
         }
 
         public T Get( int i, int j )
         {
-            if( !GetInRange(i,j) )
+            if( !Utility.Assert( IsValid(i,j), "Get.Get: indices out of range, "+i+","+j+" with size "+numRows+","+numCols ) )
                 return default(T);
             else
-                return data[ GetFlatIndex(i,j) ];
+                return data[ i, j ];
+        }
+
+        public T Get( int i, int j, T defaultVal )
+        {
+            if( !IsValid(i,j) )
+                return defaultVal;
+            else
+                return data[ i, j ];
         }
 
         public T this[int i, int j]
@@ -73,16 +91,15 @@ namespace SteveSharp
             set { Set(i,j, value); }
         }
 
-        // Also allow flat access
-        public T this[int id]
+        public T this[int k]
         {
-            get { return data[id]; }
-            set { data[id] = value; }
+            get { return Get( k / numCols, k % numCols ); }
+            set { Set( k / numCols, k % numCols, value ); }
         }
 
         public void Clear()
         {
-            data.Clear();
+            data = null;
             numRows = 0;
             numCols = 0;
         }

@@ -1,0 +1,7 @@
+res
+lon
+eng
+ena
+eni
+ent
+env

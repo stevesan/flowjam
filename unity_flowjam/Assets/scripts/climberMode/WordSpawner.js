@@ -83,13 +83,13 @@ function Reset(rowRadius:int, colRadius:int)
 
     var tiler = ClimberGrid.mainTiler;
     var tiles = tiler.GetTiles();
-    entries.Resize( tiles.numRows, tiles.numCols, null );
+    entries.Reset( tiles.numRows, tiles.numCols, null );
 
     var guy = ClimberGuy.main;
     var row0 = Mathf.Max( 0, guy.initRow - rowRadius );
-    var row1 = Mathf.Min( tiles.numRows, guy.initRow + rowRadius );
+    var row1 = Mathf.Min( tiles.numRows-1, guy.initRow + rowRadius );
     var col0 = Mathf.Max( 0, guy.initCol - colRadius );
-    var col1 = Mathf.Min( tiles.numCols, guy.initCol + colRadius );
+    var col1 = Mathf.Min( tiles.numCols-1, guy.initCol + colRadius );
 
     for( var i = row0; i <= row1; i++ )
         for( var j = col0; j <= col1; j++ )
