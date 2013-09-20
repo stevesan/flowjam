@@ -9,10 +9,12 @@ public class TopdownPlayer : MonoBehaviour
     public bool respondToInput = true;
 
     Vector3 inputDir = Vector3.zero;
+    BlastRadius blastRadius;
 
 	// Use this for initialization
 	void Start()
     {
+        blastRadius = gameObject.GetComponentInChildren<BlastRadius>();
 	}
 
     void Update()
@@ -21,13 +23,13 @@ public class TopdownPlayer : MonoBehaviour
 
         if( respondToInput )
         {
-            if( Input.GetKey("e") )
+            if( Input.GetKey("w") )
                 inputDir += new Vector3(0,0,1);
-            if( Input.GetKey("d") )
-                inputDir += new Vector3(0,0,-1);
             if( Input.GetKey("s") )
+                inputDir += new Vector3(0,0,-1);
+            if( Input.GetKey("a") )
                 inputDir += new Vector3(-1,0,0);
-            if( Input.GetKey("f") )
+            if( Input.GetKey("d") )
                 inputDir += new Vector3(1,0,0);
         }
     }
@@ -41,4 +43,9 @@ public class TopdownPlayer : MonoBehaviour
         Vector3 accel = Vector3.ClampMagnitude( deltaVel/Time.fixedDeltaTime, maxAccel );
         rigidbody.AddForce( accel, ForceMode.Acceleration );
 	}
+
+    public BlastRadius GetBlastRadius()
+    {
+        return blastRadius;
+    }
 }

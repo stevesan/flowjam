@@ -43,6 +43,17 @@ public class TopdownGame : MonoBehaviour
         // gather enemies within radius
         // damage them if their word rhymes with this one
         // if any damaged, put word in cooldown queue
+        HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+        foreach( Attackable target in targets )
+        {
+            if( target == null )
+                continue;
+
+            if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) > 0 )
+                target.OnDamaged();
+            else
+                target.OnIsNotInDanger();
+        }
     }
 
     void Update()
@@ -56,7 +67,9 @@ public class TopdownGame : MonoBehaviour
         }
         else if( state == State.Typing )
         {
-            if( Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) )
+            if( Input.GetKeyDown(KeyCode.Space)
+                    || Input.GetKeyDown(KeyCode.Return)
+                    || Input.GetKeyDown(KeyCode.Escape) )
             {
                 ExitTypingMode();
             }
@@ -66,6 +79,17 @@ public class TopdownGame : MonoBehaviour
 
                 // gather enemies within radius
                 // highlight them if their word rhymes with this one
+                HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+                foreach( Attackable target in targets )
+                {
+                    if( target == null )
+                        continue;
+
+                    if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) > 0 )
+                        target.OnIsInDanger();
+                    else
+                        target.OnIsNotInDanger();
+                }
             }
         }
     }
