@@ -8,6 +8,7 @@ public class TopdownGame : MonoBehaviour
 {
     public TopdownPlayer player;
     public TextInput input;
+    public Bullet bulletPrefab;
 
     enum State { Moving, Typing };
     State state = State.Moving;
@@ -15,12 +16,15 @@ public class TopdownGame : MonoBehaviour
     public GameObject typeModeObjects;
     public GUIText typeModeText;
     public AudioClip startTypingClip;
+    public AudioClip fireBulletClip;
+    public AudioClip cancelClip;
 
     List<string> usedWords = new List<string>();
 
     void Start()
     {
         typeModeObjects.SetActive(false);
+        bulletPrefab.gameObject.SetActive(false);
     }
 
     void EnterTypingMode()
@@ -33,27 +37,66 @@ public class TopdownGame : MonoBehaviour
         AudioSource.PlayClipAtPoint(startTypingClip, Camera.main.transform.position);
     }
 
-    void ExitTypingMode()
+    void ExitTypingMode(bool attack)
     {
         player.respondToInput = true;  
         state = State.Moving;
         typeModeObjects.SetActive(false);
-        AudioSource.PlayClipAtPoint(startTypingClip, Camera.main.transform.position);
 
-        // gather enemies within radius
-        // damage them if their word rhymes with this one
-        // if any damaged, put word in cooldown queue
-        HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
-        foreach( Attackable target in targets )
+        bool bulletsFired = false;
+
+        if( attack )
         {
-            if( target == null )
-                continue;
+            // gather enemies within radius
+            // damage them if their word rhymes with this one
+            // if any damaged, put word in cooldown queue
+            HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+            foreach( Attackable target in targets )
+            {
+                if( target == null )
+                    continue;
 
-            if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) > 0 )
-                target.OnDamaged();
-            else
+                if( IsTargetRhyming( target ) )
+                {
+                    Vector3 toTarget = target.transform.position - player.transform.position;
+                    Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
+                    bullet.SetDirection(toTarget.normalized);
+                    bulletsFired = true;
+
+                }
                 target.OnIsNotInDanger();
+            }
         }
+
+        if( bulletsFired )
+            AudioSource.PlayClipAtPoint(fireBulletClip, player.transform.position);
+        else
+            AudioSource.PlayClipAtPoint(cancelClip, player.transform.position);
+    }
+
+    bool IsTargetRhyming( Attackable target )
+    {
+        if( target == null )
+            return false;
+
+        if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) == 0 )
+            return false;
+
+        // Visible
+        /*
+        Vector3 toTarget = target.transform.position - player.transform.position;
+        RaycastHit hit = new RaycastHit();
+        bool inDanger = false;
+        if( Physics.Raycast( player.transform.position, toTarget.normalized, out hit ) )
+        {
+            Attackable hitTarget = UnityUtils.FindAncestor<Attackable>(hit.collider.gameObject);
+            if( hitTarget == target )
+                return true;
+        }
+        */
+        return true;
+
+        //return false;
     }
 
     void Update()
@@ -71,11 +114,11 @@ public class TopdownGame : MonoBehaviour
                     || Input.GetKeyDown(KeyCode.Return)
                     || Input.GetKeyDown(KeyCode.Escape) )
             {
-                ExitTypingMode();
+                ExitTypingMode(!Input.GetKeyDown(KeyCode.Escape));
             }
             else
             {
-                typeModeText.text = input.GetInput()+"_";
+                typeModeText.text = "["+input.GetInput()+"]";
 
                 // gather enemies within radius
                 // highlight them if their word rhymes with this one
@@ -85,7 +128,7 @@ public class TopdownGame : MonoBehaviour
                     if( target == null )
                         continue;
 
-                    if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) > 0 )
+                    if( IsTargetRhyming(target) )
                         target.OnIsInDanger();
                     else
                         target.OnIsNotInDanger();

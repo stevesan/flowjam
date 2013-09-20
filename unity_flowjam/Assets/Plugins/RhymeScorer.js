@@ -475,6 +475,7 @@ function RunTestCases()
     TestScoreWords('list', 'jist', 1.5);
     TestScoreWords('here', 'beer', 1.0);
     TestScoreWords('hen', 'been', 1.0);
+    TestScoreWords('cat', 'frat', 1.5);
 
     Debug.Log('-- Tests done --');
 }

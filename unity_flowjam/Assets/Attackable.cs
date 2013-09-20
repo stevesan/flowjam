@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Attackable : MonoBehaviour
 {
+    public AudioClip onDieClip;
+
     public GUIText word;
 
 	// Use this for initialization
@@ -17,11 +19,13 @@ public class Attackable : MonoBehaviour
 
     public void OnEnterBlastRadius(BlastRadius radius)
     {
+        Debug.Log("entered");
         word.color = Color.green;
     }
 
     public void OnExitBlastRadius(BlastRadius radius)
     {
+        Debug.Log("exited");
         word.color = Color.white;
     }
 
@@ -42,6 +46,7 @@ public class Attackable : MonoBehaviour
 
     public void OnDamaged()
     {
+        AudioSource.PlayClipAtPoint( onDieClip, transform.position );
         Destroy(gameObject);
     }
 }

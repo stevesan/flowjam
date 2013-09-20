@@ -19,7 +19,7 @@ public class BlastRadius : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        Attackable target = UnityUtils.FindAncestor<Attackable>(other.gameObject);
+        Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
         if( target != null )
         {
             target.OnEnterBlastRadius(this);
@@ -29,7 +29,7 @@ public class BlastRadius : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        Attackable target = UnityUtils.FindAncestor<Attackable>(other.gameObject);
+        Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
         if( target != null )
         {
             target.OnExitBlastRadius(this);
