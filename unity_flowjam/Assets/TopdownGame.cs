@@ -10,21 +10,32 @@ public class TopdownGame : MonoBehaviour
     public TextInput input;
     public Bullet bulletPrefab;
 
-    enum State { Moving, Typing };
-    State state = State.Moving;
+    enum State { Loading, Moving, Typing };
+    State state = State.Loading;
 
     public GameObject typeModeObjects;
     public GUIText typeModeText;
     public AudioClip startTypingClip;
     public AudioClip fireBulletClip;
     public AudioClip cancelClip;
+    public GameObject levelObjects;
 
     List<string> usedWords = new List<string>();
+
+    void Awake()
+    {
+        levelObjects.SetActive(false);
+    }
 
     void Start()
     {
         typeModeObjects.SetActive(false);
         bulletPrefab.gameObject.SetActive(false);
+    }
+
+    public TopdownPlayer GetPlayer()
+    {
+        return player;
     }
 
     void EnterTypingMode()
@@ -101,7 +112,15 @@ public class TopdownGame : MonoBehaviour
 
     void Update()
     {
-        if( state == State.Moving )
+        if( state == State.Loading )
+        {
+            if( RhymeScorer.main.GetIsReady() )
+            {
+                state = State.Moving;
+                levelObjects.SetActive(true);
+            }
+        }
+        else if( state == State.Moving )
         {
             if( Input.GetKeyDown(KeyCode.Space) )
             {

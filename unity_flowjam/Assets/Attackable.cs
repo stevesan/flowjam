@@ -6,10 +6,12 @@ public class Attackable : MonoBehaviour
     public AudioClip onDieClip;
 
     public GUIText word;
+    public int difficulty;
 
 	// Use this for initialization
-	void Start () {
-	
+	void Start()
+    {
+        word.text = RhymeScorer.main.GetRandomPromptWord(difficulty);
 	}
 	
 	// Update is called once per frame
@@ -19,13 +21,11 @@ public class Attackable : MonoBehaviour
 
     public void OnEnterBlastRadius(BlastRadius radius)
     {
-        Debug.Log("entered");
-        word.color = Color.green;
+        word.color = Color.white;
     }
 
     public void OnExitBlastRadius(BlastRadius radius)
     {
-        Debug.Log("exited");
         word.color = Color.white;
     }
 
@@ -36,7 +36,7 @@ public class Attackable : MonoBehaviour
 
     public void OnIsNotInDanger()
     {
-        word.color = Color.green;
+        word.color = Color.white;
     }
 
     public string GetWord()

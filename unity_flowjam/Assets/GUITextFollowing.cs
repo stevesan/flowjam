@@ -27,5 +27,7 @@ public class GUITextFollowing : MonoBehaviour
         wsPos = Vector3.SmoothDamp( wsPos, target.position, ref dampVelocity, smoothTime );
         Vector3 vsPos = camera.camera.WorldToViewportPoint( wsPos ) + viewportOffset;
         transform.position = vsPos;
+
+        gameObject.BroadcastMessage("GUITextPositionChangedLate", SendMessageOptions.DontRequireReceiver );
 	}
 }

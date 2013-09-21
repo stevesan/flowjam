@@ -20,6 +20,14 @@ namespace SteveSharp
             return inst.GetComponent<C>();
         }
 
+        public static GameObject Instantiate( GameObject prefab, Vector3 pos, Transform parent = null ) 
+        {
+            GameObject inst = (GameObject)GameObject.Instantiate(prefab.gameObject, pos, Quaternion.identity);
+            inst.transform.parent = null;
+            inst.SetActive(true);
+            return inst;
+        }
+
         public static C FindAncestor<C>( GameObject obj ) where C:MonoBehaviour
         {
             while( true )
@@ -36,6 +44,19 @@ namespace SteveSharp
 
                 obj = obj.transform.parent.gameObject;
             }
+        }
+
+        public static bool CanSee<C>( C target, Vector3 startPos ) where C : MonoBehaviour
+        {
+            Vector3 toTarget = target.transform.position - startPos;
+            RaycastHit hit = new RaycastHit();
+            if( Physics.Raycast( startPos, toTarget.normalized, out hit ) )
+            {
+                C hitComp = FindAncestor<C>(hit.collider.gameObject);
+                if( hitComp == target )
+                    return true;
+            }
+            return false;
         }
     }
 

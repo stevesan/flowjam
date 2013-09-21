@@ -9,6 +9,8 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     public float hitRadius = 1f;
     Vector3 dir = Vector3.zero;
+    public AudioClip dudClip;
+    public GameObject hitFx;
 
     public void SetDirection(Vector3 dir)
     {
@@ -30,8 +32,13 @@ public class Bullet : MonoBehaviour
             {
                 target.OnDamaged();
             }
+            else
+            {
+                AudioSource.PlayClipAtPoint( dudClip, transform.position );
+            }
 
             Destroy(gameObject);
+            Utility.Instantiate(hitFx, transform.position);
         }
     }
 }
