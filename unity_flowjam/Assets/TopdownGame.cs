@@ -15,6 +15,7 @@ public class TopdownGame : MonoBehaviour
 
     public GameObject typeModeObjects;
     public GUIText typeModeText;
+    public GUIText healthText;
     public AudioClip startTypingClip;
     public AudioClip fireBulletClip;
     public AudioClip cancelClip;
@@ -71,7 +72,7 @@ public class TopdownGame : MonoBehaviour
                 {
                     Vector3 toTarget = target.transform.position - player.transform.position;
                     Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
-                    bullet.SetDirection(toTarget.normalized);
+                    bullet.Init(toTarget.normalized, input.GetInput());
                     bulletsFired = true;
 
                 }
@@ -93,21 +94,14 @@ public class TopdownGame : MonoBehaviour
         if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) == 0 )
             return false;
 
-        // Visible
-        /*
-        Vector3 toTarget = target.transform.position - player.transform.position;
-        RaycastHit hit = new RaycastHit();
-        bool inDanger = false;
-        if( Physics.Raycast( player.transform.position, toTarget.normalized, out hit ) )
-        {
-            Attackable hitTarget = UnityUtils.FindAncestor<Attackable>(hit.collider.gameObject);
-            if( hitTarget == target )
-                return true;
-        }
-        */
         return true;
+    }
 
-        //return false;
+    void UpdateHealth()
+    {
+        healthText.text = "";
+        for( int i = 0; i < player.GetHealth(); i++ )
+            healthText.text += "=";
     }
 
     void Update()
@@ -122,6 +116,8 @@ public class TopdownGame : MonoBehaviour
         }
         else if( state == State.Moving )
         {
+            UpdateHealth();
+
             if( Input.GetKeyDown(KeyCode.Space) )
             {
                 EnterTypingMode();
@@ -129,6 +125,8 @@ public class TopdownGame : MonoBehaviour
         }
         else if( state == State.Typing )
         {
+            UpdateHealth();
+
             if( Input.GetKeyDown(KeyCode.Space)
                     || Input.GetKeyDown(KeyCode.Return)
                     || Input.GetKeyDown(KeyCode.Escape) )
@@ -142,16 +140,25 @@ public class TopdownGame : MonoBehaviour
                 // gather enemies within radius
                 // highlight them if their word rhymes with this one
                 HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+                bool canAttackAny = false;
                 foreach( Attackable target in targets )
                 {
                     if( target == null )
                         continue;
 
                     if( IsTargetRhyming(target) )
+                    {
+                        canAttackAny = true;
                         target.OnIsInDanger();
+                    }
                     else
                         target.OnIsNotInDanger();
                 }
+
+                if( canAttackAny )
+                    typeModeText.color = Color.red;
+                else
+                    typeModeText.color = Color.white;
             }
         }
     }

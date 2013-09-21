@@ -1,12 +1,8 @@
 TASK LIST:
 
-- ok, this climbing thing is actually not that fun. i think we need some cooommmmbbbbbbaaaatttttt!!!! yeah, it's not really working the way spelltower and puzzlejuice work. The spelling mechanic
-    is pretty intimately tied to the spatial aspects of those games, and the interest comes from the spelling + spatial reasoning. In my game, they're pretty separated.
-    i think we should try the swarming action game approach! the sight of a word chasing you, but then you smacking it down with a rhyme is pretty funny. there's also a bit of spatial fun,
-    such as going into a cluster of words that rhyme with "cat", then typing "cat" and completely wiping out that cluster. That's something we don't have in the climbing game! Sort of
-    an area-of-effect mechanic.
-    what sort of meaningful powerups/stats could we have? 
+- fix "fun" ryhming with "when"
 
+- cluster enemies
 
 - consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
     hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)
@@ -206,3 +202,9 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
         this creates the "1st & goal" effect
     * time-trials - get to the top ASAP
         i think this is the best mode.
+- ok, this climbing thing is actually not that fun. i think we need some cooommmmbbbbbbaaaatttttt!!!! yeah, it's not really working the way spelltower and puzzlejuice work. The spelling mechanic
+    is pretty intimately tied to the spatial aspects of those games, and the interest comes from the spelling + spatial reasoning. In my game, they're pretty separated.
+    i think we should try the swarming action game approach! the sight of a word chasing you, but then you smacking it down with a rhyme is pretty funny. there's also a bit of spatial fun,
+    such as going into a cluster of words that rhyme with "cat", then typing "cat" and completely wiping out that cluster. That's something we don't have in the climbing game! Sort of
+    an area-of-effect mechanic.
+    what sort of meaningful powerups/stats could we have? 

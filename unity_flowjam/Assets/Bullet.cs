@@ -8,13 +8,17 @@ public class Bullet : MonoBehaviour
 {
     public float speed = 10f;
     public float hitRadius = 1f;
-    Vector3 dir = Vector3.zero;
     public AudioClip dudClip;
     public GameObject hitFx;
 
-    public void SetDirection(Vector3 dir)
+    Vector3 dir = Vector3.zero;
+    string word;
+
+
+    public void Init(Vector3 dir, string word)
     {
         this.dir = dir;
+        this.word = word;
     }
 
     void Update()
@@ -28,7 +32,7 @@ public class Bullet : MonoBehaviour
                 continue;
 
             Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
-            if( target != null )
+            if( target != null && RhymeScorer.main.ScoreWords(word, target.GetWord()) > 0 )
             {
                 target.OnDamaged();
             }

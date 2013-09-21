@@ -30,6 +30,11 @@ namespace SteveSharp
                 // TODO we should really remove the null object from the dictionary
             }
         }
+
+        public void Trigger( MonoBehaviour comp )
+        {
+            Trigger( comp.gameObject );
+        }
         
     }
 }

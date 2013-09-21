@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using SteveSharp;
 
 public class Attackable : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class Attackable : MonoBehaviour
 
     public GUIText word;
     public int difficulty;
+
+    public GameEvent dieEvent = new GameEvent();
 
 	// Use this for initialization
 	void Start()
@@ -44,9 +47,15 @@ public class Attackable : MonoBehaviour
         return word.text;
     }
 
-    public void OnDamaged()
+    void OnDie()
     {
         AudioSource.PlayClipAtPoint( onDieClip, transform.position );
+        dieEvent.Trigger(this);
         Destroy(gameObject);
+    }
+
+    public void OnDamaged()
+    {
+        OnDie();
     }
 }
