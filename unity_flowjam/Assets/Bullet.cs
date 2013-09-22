@@ -9,6 +9,7 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     public float hitRadius = 1f;
     public AudioClip dudClip;
+    public GameObject dudFx;
     public GameObject hitFx;
 
     Vector3 dir = Vector3.zero;
@@ -37,14 +38,15 @@ public class Bullet : MonoBehaviour
             if( target != null && game.IsEffectiveAgainst(word, target.GetWord()) )
             {
                 target.OnDamaged();
+                Utility.Instantiate(hitFx, transform.position);
             }
             else
             {
                 AudioSource.PlayClipAtPoint( dudClip, transform.position );
+                Utility.Instantiate(dudFx, transform.position);
             }
 
             Destroy(gameObject);
-            Utility.Instantiate(hitFx, transform.position);
         }
     }
 }

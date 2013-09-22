@@ -10,22 +10,18 @@ public class TopdownCamera : MonoBehaviour
     public GameEvent lateUpdateDone = new GameEvent();
 
     Vector3 followVelocity = Vector3.zero;
+    Vector3 offset;
 
 	// Use this for initialization
 	void Start()
     {
-	
+        offset = transform.position - target.position;
 	}
 	
 	// Update is called once per frame
 	void LateUpdate()
     {
-        Vector3 p = transform.position;
-        float origY = p.y;
-        p = Vector3.SmoothDamp( p, target.position, ref followVelocity, smoothTime );
-        p.y = origY;
-        transform.position = p;
-
+        transform.position = Vector3.SmoothDamp( transform.position, target.position+offset, ref followVelocity, smoothTime );
         lateUpdateDone.Trigger(gameObject);
 	}
 }

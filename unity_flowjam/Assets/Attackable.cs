@@ -4,7 +4,8 @@ using SteveSharp;
 
 public class Attackable : MonoBehaviour
 {
-    public AudioClip onDieClip;
+    public AudioClip dieClip;
+    public GameObject dieFx;
 
     public GUIText word;
     public int difficulty;
@@ -49,7 +50,8 @@ public class Attackable : MonoBehaviour
 
     void OnDie()
     {
-        AudioSource.PlayClipAtPoint( onDieClip, transform.position );
+        AudioSource.PlayClipAtPoint( dieClip, transform.position );
+        Utility.Instantiate(dieFx, transform.position);
         dieEvent.Trigger(this);
         Destroy(gameObject);
     }

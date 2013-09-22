@@ -1,10 +1,10 @@
 TASK LIST:
 
-- fix "fun" ryhming with "when"
-- consider softening the "too similar" restriction
+- fun vs. when
 - draw vs. raw
-- treasure chests that you need to rhyme two syllables?
+- things that must rhyme 2 syllables?
 - timed sequences where you have to rhyme 3 words in a row in order to get a positive reward... like a treasure chest lock...
+    how to do this with existing ideas?
 - cluster enemies - all parts could have the same word, so you need to find many words that rhyme with it to kill it/get to the reward
 
 - bomb drones, that will kill nearby enemies if you rhyme with them.
@@ -214,3 +214,6 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
     such as going into a cluster of words that rhyme with "cat", then typing "cat" and completely wiping out that cluster. That's something we don't have in the climbing game! Sort of
     an area-of-effect mechanic.
     what sort of meaningful powerups/stats could we have? 
+- consider softening the "too similar" restriction
+    ok, now amp vs. ramp is OK, but amp vs. amps is not, and raise vs. raised is not
+- treasure chests that you need to rhyme two syllables?

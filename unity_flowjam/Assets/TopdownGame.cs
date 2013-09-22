@@ -26,13 +26,25 @@ public class TopdownGame : MonoBehaviour
 
     void Awake()
     {
+        typeModeObjects.SetActive(false);
+        bulletPrefab.gameObject.SetActive(false);
         levelObjects.SetActive(false);
+    }
+
+    void Reset()
+    {
+        usedWords.Clear();
+        typeModeObjects.SetActive(false);
+        bulletPrefab.gameObject.SetActive(false);
+        levelObjects.SetActive(false);
+
+        if( state != State.Loading )
+            state = State.Moving;
     }
 
     void Start()
     {
-        typeModeObjects.SetActive(false);
-        bulletPrefab.gameObject.SetActive(false);
+        Reset();
     }
 
     public TopdownPlayer GetPlayer()
@@ -163,7 +175,8 @@ public class TopdownGame : MonoBehaviour
             {
                 ExitTypingMode(
                         !Input.GetKeyDown(KeyCode.Escape)
-                        && RhymeScorer.main.IsValidAnswer(input.GetInput()) );
+                        && RhymeScorer.main.IsValidAnswer(input.GetInput())
+                        && !usedWords.Contains(input.GetInput()) );
             }
             else
             {
@@ -173,6 +186,12 @@ public class TopdownGame : MonoBehaviour
                 {
                     typeModeText.color = Color.white;
                     typeModeFeedback.text = "type";
+                    typeModeFeedback.color = Color.white;
+                }
+                else if( usedWords.Contains(input.GetInput() ) )
+                {
+                    typeModeText.color = Color.white;
+                    typeModeFeedback.text = "already used!";
                     typeModeFeedback.color = Color.white;
                 }
                 else if( RhymeScorer.main.IsValidAnswer( input.GetInput() ) )
@@ -197,7 +216,7 @@ public class TopdownGame : MonoBehaviour
 
                     if( canAttackAny )
                     {
-                        typeModeText.color = Color.white;
+                        typeModeText.color = Color.red;
                         typeModeFeedback.text = "space to attack!";
                         typeModeFeedback.color = Color.red;
                     }
