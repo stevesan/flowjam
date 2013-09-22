@@ -330,7 +330,7 @@ function ScorePronuns( aSyls:List.<Syllable>, bSyls:List.<Syllable> )
     return score;
 }
 
-function GetPronunsForWord(word:String) : List.< List.<Syllable> >
+function GetPronuns(word:String) : List.< List.<Syllable> >
 {
     word = word.ToLower();
     var pronuns = new List.< List.<Syllable> >();
@@ -356,17 +356,11 @@ function IsTooSimilar( a:String, b:String )
         || b.IndexOf(a) != -1;
 }
 
-function ScoreWords(a:String, b:String)
+function GetMaxPronunScore( a:String, b:String )
 {
-    if( !IsValidAnswer(a) || !IsValidAnswer(b) )
-        return 0.0;
-
-    if( IsTooSimilar(a, b) )
-        return 0.0;
-
     // find all variants
-    var aPros = GetPronunsForWord(a);
-    var bPros = GetPronunsForWord(b);
+    var aPros = GetPronuns(a);
+    var bPros = GetPronuns(b);
 
     // get max score of all unique pairings
     var maxScore = 0.0;
@@ -382,6 +376,17 @@ function ScoreWords(a:String, b:String)
         }
     }
     return maxScore;
+}
+
+function ScoreWords(a:String, b:String)
+{
+    if( !IsValidAnswer(a) || !IsValidAnswer(b) )
+        return 0.0;
+
+    if( IsTooSimilar(a, b) )
+        return 0.0;
+
+    return GetMaxPronunScore( a, b );
 }
 
 function ScoreWordsWithBonus(a:String, b:String)

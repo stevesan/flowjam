@@ -13,12 +13,14 @@ public class Bullet : MonoBehaviour
 
     Vector3 dir = Vector3.zero;
     string word;
+    TopdownGame game;
 
 
-    public void Init(Vector3 dir, string word)
+    public void Init(Vector3 dir, string word, TopdownGame game)
     {
         this.dir = dir;
         this.word = word;
+        this.game = game;
     }
 
     void Update()
@@ -32,7 +34,7 @@ public class Bullet : MonoBehaviour
                 continue;
 
             Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
-            if( target != null && RhymeScorer.main.ScoreWords(word, target.GetWord()) > 0 )
+            if( target != null && game.IsEffectiveAgainst(word, target.GetWord()) )
             {
                 target.OnDamaged();
             }

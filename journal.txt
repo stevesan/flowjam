@@ -1,8 +1,14 @@
 TASK LIST:
 
 - fix "fun" ryhming with "when"
+- consider softening the "too similar" restriction
+- draw vs. raw
+- treasure chests that you need to rhyme two syllables?
+- timed sequences where you have to rhyme 3 words in a row in order to get a positive reward... like a treasure chest lock...
+- cluster enemies - all parts could have the same word, so you need to find many words that rhyme with it to kill it/get to the reward
 
-- cluster enemies
+- bomb drones, that will kill nearby enemies if you rhyme with them.
+    select them with number keys? each number could be a weapon.
 
 - consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
     hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)

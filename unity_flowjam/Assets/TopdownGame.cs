@@ -15,13 +15,14 @@ public class TopdownGame : MonoBehaviour
 
     public GameObject typeModeObjects;
     public GUIText typeModeText;
+    public GUIText typeModeFeedback;
     public GUIText healthText;
     public AudioClip startTypingClip;
     public AudioClip fireBulletClip;
     public AudioClip cancelClip;
     public GameObject levelObjects;
 
-    List<string> usedWords = new List<string>();
+    HashSet<string> usedWords = new HashSet<string>();
 
     void Awake()
     {
@@ -46,6 +47,7 @@ public class TopdownGame : MonoBehaviour
         typeModeObjects.SetActive(true);
         input.ClearInput();
         typeModeText.text = "_";
+        typeModeFeedback.text = "";
         AudioSource.PlayClipAtPoint(startTypingClip, Camera.main.transform.position);
     }
 
@@ -68,11 +70,11 @@ public class TopdownGame : MonoBehaviour
                 if( target == null )
                     continue;
 
-                if( IsTargetRhyming( target ) )
+                if( CanAttackTarget( target ) )
                 {
                     Vector3 toTarget = target.transform.position - player.transform.position;
                     Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
-                    bullet.Init(toTarget.normalized, input.GetInput());
+                    bullet.Init(toTarget.normalized, input.GetInput(), this);
                     bulletsFired = true;
 
                 }
@@ -81,20 +83,48 @@ public class TopdownGame : MonoBehaviour
         }
 
         if( bulletsFired )
+        {
             AudioSource.PlayClipAtPoint(fireBulletClip, player.transform.position);
+            usedWords.Add( input.GetInput() );
+        }
         else
             AudioSource.PlayClipAtPoint(cancelClip, player.transform.position);
     }
 
-    bool IsTargetRhyming( Attackable target )
+    public bool AreWordsTooSimilar( string attack, string target )
+    {
+        // Don't allow the same word
+        // Don't allow plural variants
+        // Don't allow past tense variants
+        // But allow things like amp vs. camp
+        if( (attack.IndexOf(target) == 0 || target.IndexOf(attack) == 0 )
+                && Mathf.Abs(attack.Length - target.Length) <= 1 )
+            return true;
+        return false;
+    }
+
+    public bool IsEffectiveAgainst( string attackWord, string targetWord )
+    {
+        if( !RhymeScorer.main.IsValidAnswer( attackWord ) )
+            return false;
+
+        if( AreWordsTooSimilar( attackWord, targetWord ) )
+        {
+            return false;
+        }
+
+        if( RhymeScorer.main.GetMaxPronunScore( attackWord, targetWord ) == 0 )
+            return false;
+
+        return true;
+    }
+
+    bool CanAttackTarget( Attackable target )
     {
         if( target == null )
             return false;
 
-        if( RhymeScorer.main.ScoreWords( input.GetInput(), target.GetWord() ) == 0 )
-            return false;
-
-        return true;
+        return IsEffectiveAgainst( input.GetInput(), target.GetWord() );
     }
 
     void UpdateHealth()
@@ -131,34 +161,59 @@ public class TopdownGame : MonoBehaviour
                     || Input.GetKeyDown(KeyCode.Return)
                     || Input.GetKeyDown(KeyCode.Escape) )
             {
-                ExitTypingMode(!Input.GetKeyDown(KeyCode.Escape));
+                ExitTypingMode(
+                        !Input.GetKeyDown(KeyCode.Escape)
+                        && RhymeScorer.main.IsValidAnswer(input.GetInput()) );
             }
             else
             {
                 typeModeText.text = "["+input.GetInput()+"]";
 
-                // gather enemies within radius
-                // highlight them if their word rhymes with this one
-                HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
-                bool canAttackAny = false;
-                foreach( Attackable target in targets )
+                if( input.GetInput().Length == 0 )
                 {
-                    if( target == null )
-                        continue;
-
-                    if( IsTargetRhyming(target) )
+                    typeModeText.color = Color.white;
+                    typeModeFeedback.text = "type";
+                    typeModeFeedback.color = Color.white;
+                }
+                else if( RhymeScorer.main.IsValidAnswer( input.GetInput() ) )
+                {
+                    // gather enemies within radius
+                    // highlight them if their word rhymes with this one
+                    HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+                    bool canAttackAny = false;
+                    foreach( Attackable target in targets )
                     {
-                        canAttackAny = true;
-                        target.OnIsInDanger();
+                        if( target == null )
+                            continue;
+
+                        if( CanAttackTarget(target) )
+                        {
+                            canAttackAny = true;
+                            target.OnIsInDanger();
+                        }
+                        else
+                            target.OnIsNotInDanger();
+                    }
+
+                    if( canAttackAny )
+                    {
+                        typeModeText.color = Color.white;
+                        typeModeFeedback.text = "space to attack!";
+                        typeModeFeedback.color = Color.red;
                     }
                     else
-                        target.OnIsNotInDanger();
+                    {
+                        typeModeText.color = Color.white;
+                        typeModeFeedback.text = "no rhyming targets";
+                        typeModeFeedback.color = Color.white;
+                    }
                 }
-
-                if( canAttackAny )
-                    typeModeText.color = Color.red;
                 else
-                    typeModeText.color = Color.white;
+                {
+                        typeModeText.color = Color.white;
+                        typeModeFeedback.text = "not a word";
+                        typeModeFeedback.color = Color.white;
+                }
             }
         }
     }
