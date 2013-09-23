@@ -16,7 +16,6 @@ public class Bullet : MonoBehaviour
     string word;
     TopdownGame game;
 
-
     public void Init(Vector3 dir, string word, TopdownGame game)
     {
         this.dir = dir;

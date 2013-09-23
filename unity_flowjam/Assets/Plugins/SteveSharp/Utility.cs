@@ -15,7 +15,7 @@ namespace SteveSharp
         public static C MyInstantiate<C>( C prefab, Vector3 pos, Transform parent = null ) where C : MonoBehaviour
         {
             GameObject inst = (GameObject)GameObject.Instantiate(prefab.gameObject, pos, Quaternion.identity);
-            inst.transform.parent = null;
+            inst.transform.parent = parent;
             inst.SetActive(true);
             return inst.GetComponent<C>();
         }
@@ -23,7 +23,7 @@ namespace SteveSharp
         public static GameObject Instantiate( GameObject prefab, Vector3 pos, Transform parent = null ) 
         {
             GameObject inst = (GameObject)GameObject.Instantiate(prefab.gameObject, pos, Quaternion.identity);
-            inst.transform.parent = null;
+            inst.transform.parent = parent;
             inst.SetActive(true);
             return inst;
         }

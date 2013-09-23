@@ -20,7 +20,7 @@ public class TopdownGame : MonoBehaviour
     public AudioClip startTypingClip;
     public AudioClip fireBulletClip;
     public AudioClip cancelClip;
-    public GameObject levelObjects;
+    public LevelSpawner levelSpawner;
 
     HashSet<string> usedWords = new HashSet<string>();
 
@@ -28,7 +28,6 @@ public class TopdownGame : MonoBehaviour
     {
         typeModeObjects.SetActive(false);
         bulletPrefab.gameObject.SetActive(false);
-        levelObjects.SetActive(false);
     }
 
     void Reset()
@@ -36,7 +35,6 @@ public class TopdownGame : MonoBehaviour
         usedWords.Clear();
         typeModeObjects.SetActive(false);
         bulletPrefab.gameObject.SetActive(false);
-        levelObjects.SetActive(false);
 
         if( state != State.Loading )
             state = State.Moving;
@@ -76,7 +74,7 @@ public class TopdownGame : MonoBehaviour
             // gather enemies within radius
             // damage them if their word rhymes with this one
             // if any damaged, put word in cooldown queue
-            HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+            HashSet<Attackable> targets = player.GetVisibility().GetActiveTargets();
             foreach( Attackable target in targets )
             {
                 if( target == null )
@@ -153,7 +151,8 @@ public class TopdownGame : MonoBehaviour
             if( RhymeScorer.main.GetIsReady() )
             {
                 state = State.Moving;
-                levelObjects.SetActive(true);
+                levelSpawner.Spawn();
+                player.transform.position = levelSpawner.GetPlayerStart();
             }
         }
         else if( state == State.Moving )
@@ -198,7 +197,7 @@ public class TopdownGame : MonoBehaviour
                 {
                     // gather enemies within radius
                     // highlight them if their word rhymes with this one
-                    HashSet<Attackable> targets = player.GetBlastRadius().GetActiveTargets();
+                    HashSet<Attackable> targets = player.GetVisibility().GetActiveTargets();
                     bool canAttackAny = false;
                     foreach( Attackable target in targets )
                     {

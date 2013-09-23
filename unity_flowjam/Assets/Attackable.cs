@@ -2,6 +2,11 @@
 using System.Collections;
 using SteveSharp;
 
+/*
+TODOS:
+
+*/
+
 public class Attackable : MonoBehaviour
 {
     public AudioClip dieClip;
@@ -9,17 +14,35 @@ public class Attackable : MonoBehaviour
 
     public GUIText word;
     public int difficulty;
+    public float maxWordLifeTime = 0f;
 
     public GameEvent dieEvent = new GameEvent();
+
+    private float wordLifeTime = 0f;
+
+    void SwitchWord()
+    {
+        word.text = RhymeScorer.main.GetRandomPromptWord(difficulty);
+        wordLifeTime = maxWordLifeTime;
+    }
 
 	// Use this for initialization
 	void Start()
     {
-        word.text = RhymeScorer.main.GetRandomPromptWord(difficulty);
+        SwitchWord();
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update()
+    {
+        if( maxWordLifeTime > 0 )
+        {
+            wordLifeTime -= Time.deltaTime;
+            if( wordLifeTime < 0 )
+            {
+                SwitchWord();
+            }
+        }
 	
 	}
 
@@ -51,7 +74,8 @@ public class Attackable : MonoBehaviour
     void OnDie()
     {
         AudioSource.PlayClipAtPoint( dieClip, transform.position );
-        Utility.Instantiate(dieFx, transform.position);
+        if( dieFx != null )
+            Utility.Instantiate(dieFx, transform.position);
         dieEvent.Trigger(this);
         Destroy(gameObject);
     }

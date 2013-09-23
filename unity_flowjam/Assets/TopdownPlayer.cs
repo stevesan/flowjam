@@ -18,12 +18,12 @@ public class TopdownPlayer : MonoBehaviour
     int health;
 
     Vector3 inputDir = Vector3.zero;
-    BlastRadius blastRadius;
+    PlayerVisibility visibility;
 
 	// Use this for initialization
 	void Start()
     {
-        blastRadius = gameObject.GetComponentInChildren<BlastRadius>();
+        visibility = gameObject.GetComponentInChildren<PlayerVisibility>();
         health = initHealth;
 	}
 
@@ -58,9 +58,9 @@ public class TopdownPlayer : MonoBehaviour
         rigidbody.AddForce( accel, ForceMode.Acceleration );
 	}
 
-    public BlastRadius GetBlastRadius()
+    public PlayerVisibility GetVisibility()
     {
-        return blastRadius;
+        return visibility;
     }
 
     void OnCollision( Collision col )

@@ -1,10 +1,49 @@
 TASK LIST:
 
-- fun vs. when
-- draw vs. raw
+rhyme fixes:
+    fun vs. when
+    draw vs. raw
+    alt vs. fault
+
+upgrades/abilities:
+    allow player to use words multiple times
+
+scoring:
+    more points if you rhyme better..ok
+    count for # words used? less == more points
+    combo multiplier
+
+problems:
+    clutter. could make enemy size dependent on word length.
+    flocking: enemies themselves could avoid clumping.
+    kiting is too easy.
+
+types of "levels":
+    bullet hell-ish, binding of isaac
+        enemy types:
+            normal drone
+            
+    forced motion (ie. with lava rising, then obstacles or enemies)
+    puzzle/exploration, where there are treasures to get if you can rhyme enough. multiple words can form a wall.
+        maybe some time-sensitive stuff...like a treasure that goes away. yes, that's it.
+        like Cut the Rope's timed stars.
+
+enemy variables:
+    speed
+    syllable counts..
+    same-word clumps - rings? like helsing's fire
+    blocks which change words over time!!
+    ** bombs! kills players and nearby enemies. so this effectively makes the player leave certain areas.
+
+items:
+    health pickups
+    breakable blocks
+    shape shifting - words change over time. can be a block or an enemy!
+    what about letting the player move blocks around? like arrange two sets of words into equivalence classes...hmmm
+
+    timed pickups...when the player gets close enough, spawn them with a timer.
+
 - things that must rhyme 2 syllables?
-- timed sequences where you have to rhyme 3 words in a row in order to get a positive reward... like a treasure chest lock...
-    how to do this with existing ideas?
 - cluster enemies - all parts could have the same word, so you need to find many words that rhyme with it to kill it/get to the reward
 
 - bomb drones, that will kill nearby enemies if you rhyme with them.
@@ -217,3 +256,6 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 - consider softening the "too similar" restriction
     ok, now amp vs. ramp is OK, but amp vs. amps is not, and raise vs. raised is not
 - treasure chests that you need to rhyme two syllables?
+- timed sequences where you have to rhyme 3 words in a row in order to get a positive reward... like a treasure chest lock...
+    how to do this with existing ideas?
+    just have the reward behind blocks, and it goes away after time.

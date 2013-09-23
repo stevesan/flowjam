@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SteveSharp;
 
-public class BlastRadius : MonoBehaviour
+public class PlayerVisibility : MonoBehaviour
 {
     HashSet<Attackable> activeTargets = new HashSet<Attackable>();
 
@@ -22,7 +22,7 @@ public class BlastRadius : MonoBehaviour
         Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
         if( target != null )
         {
-            target.SendMessage("OnEnterBlastRadius", this, SendMessageOptions.DontRequireReceiver);
+            target.SendMessage("OnEnterPlayerVisibility", this, SendMessageOptions.DontRequireReceiver);
             activeTargets.Add(target);
         }
     }
@@ -32,7 +32,7 @@ public class BlastRadius : MonoBehaviour
         Attackable target = Utility.FindAncestor<Attackable>(other.gameObject);
         if( target != null )
         {
-            target.SendMessage("OnExitBlastRadius", this, SendMessageOptions.DontRequireReceiver);
+            target.SendMessage("OnExitPlayerVisibility", this, SendMessageOptions.DontRequireReceiver);
             activeTargets.Remove(target);
         }
     }

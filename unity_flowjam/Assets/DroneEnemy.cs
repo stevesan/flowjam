@@ -11,6 +11,7 @@ public class DroneEnemy : MonoBehaviour {
     TopdownMover mover;
     TopdownPlayer player;
     TopdownGame game;
+    bool playerHasSeen = false;
 
     HashSet<Attackable> parts = new HashSet<Attackable>();
 
@@ -43,7 +44,7 @@ public class DroneEnemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update()
     {
-        if( moveTowardsPlayer /*&& Utility.CanSee<TopdownPlayer>(player, transform.position)*/ )
+        if( moveTowardsPlayer && playerHasSeen )
         {
             Vector3 move = player.transform.position - transform.position;
             mover.SetMove(move.normalized);
@@ -53,4 +54,9 @@ public class DroneEnemy : MonoBehaviour {
             mover.SetMove(Vector3.zero);
         }
 	}
+
+    void OnEnterPlayerVisibility( PlayerVisibility vis )
+    {
+        playerHasSeen = true;
+    }
 }
