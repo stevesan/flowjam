@@ -2,11 +2,6 @@
 using System.Collections;
 using SteveSharp;
 
-/*
-TODOS:
-
-*/
-
 public class Attackable : MonoBehaviour
 {
     public AudioClip dieClip;
@@ -42,6 +37,8 @@ public class Attackable : MonoBehaviour
             {
                 SwitchWord();
             }
+
+            word.color = Color.Lerp( Color.white, Color.red, Utility.Unlerp( maxWordLifeTime, 0, wordLifeTime ) );
         }
 	
 	}

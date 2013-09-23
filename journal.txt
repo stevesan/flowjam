@@ -16,7 +16,7 @@ scoring:
 problems:
     clutter. could make enemy size dependent on word length.
     flocking: enemies themselves could avoid clumping.
-    kiting is too easy.
+    kiting is too easy - tight spaces definitely make it harder
 
 types of "levels":
     bullet hell-ish, binding of isaac

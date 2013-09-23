@@ -58,6 +58,11 @@ namespace SteveSharp
             }
             return false;
         }
+
+        public static float Unlerp( float from, float to, float x )
+        {
+            return (x - from) / (to - from);
+        }
     }
 
 }
