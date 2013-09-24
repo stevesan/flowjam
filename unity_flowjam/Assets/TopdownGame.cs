@@ -69,27 +69,24 @@ public class TopdownGame : MonoBehaviour
 
         bool bulletsFired = false;
 
-        if( attack )
+        // gather enemies within radius
+        // damage them if their word rhymes with this one
+        // if any damaged, put word in cooldown queue
+        HashSet<Attackable> targets = player.GetVisibility().GetActiveTargets();
+        foreach( Attackable target in targets )
         {
-            // gather enemies within radius
-            // damage them if their word rhymes with this one
-            // if any damaged, put word in cooldown queue
-            HashSet<Attackable> targets = player.GetVisibility().GetActiveTargets();
-            foreach( Attackable target in targets )
+            if( target == null )
+                continue;
+
+            if( attack && CanAttackTarget( target ) )
             {
-                if( target == null )
-                    continue;
+                Vector3 toTarget = target.transform.position - player.transform.position;
+                Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
+                bullet.Init(toTarget.normalized, input.GetInput(), this);
+                bulletsFired = true;
 
-                if( CanAttackTarget( target ) )
-                {
-                    Vector3 toTarget = target.transform.position - player.transform.position;
-                    Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
-                    bullet.Init(toTarget.normalized, input.GetInput(), this);
-                    bulletsFired = true;
-
-                }
-                target.OnIsNotInDanger();
             }
+            target.OnIsNotInDanger();
         }
 
         if( bulletsFired )
@@ -123,7 +120,7 @@ public class TopdownGame : MonoBehaviour
             return false;
         }
 
-        if( RhymeScorer.main.GetMaxPronunScore( attackWord, targetWord ) == 0 )
+        if( RhymeScorer.main.GetMaxWordWordScore( attackWord, targetWord ) == 0 )
             return false;
 
         return true;
@@ -159,7 +156,7 @@ public class TopdownGame : MonoBehaviour
         {
             UpdateHealth();
 
-            if( Input.GetKeyDown(KeyCode.Space) )
+            if( Input.GetKeyDown("j") )
             {
                 EnterTypingMode();
             }
@@ -168,9 +165,7 @@ public class TopdownGame : MonoBehaviour
         {
             UpdateHealth();
 
-            if( Input.GetKeyDown(KeyCode.Space)
-                    || Input.GetKeyDown(KeyCode.Return)
-                    || Input.GetKeyDown(KeyCode.Escape) )
+            if( Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Escape) )
             {
                 ExitTypingMode(
                         !Input.GetKeyDown(KeyCode.Escape)

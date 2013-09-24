@@ -1,9 +1,16 @@
 TASK LIST:
 
+ok, early game is good.
+
+MUST RHYME ALL SYLLABLES! allow multi-word entries too!
+
 rhyme fixes:
     fun vs. when
     draw vs. raw
     alt vs. fault
+    hog / dog
+
+    TODO: need a quick tool to before/after syllable-equivalence changes. so i can say like, if i make these syllables rhyme, what changes? what words that previously did not rhyme become rhyming?
 
 upgrades/abilities:
     allow player to use words multiple times
@@ -17,6 +24,7 @@ problems:
     clutter. could make enemy size dependent on word length.
     flocking: enemies themselves could avoid clumping.
     kiting is too easy - tight spaces definitely make it harder
+    in later game, how to encourage combos? make it obvious that combos are better? 
 
 types of "levels":
     bullet hell-ish, binding of isaac

@@ -1,3 +1,4 @@
+des
 res
 lon
 eng
@@ -5,3 +6,11 @@ ena
 eni
 ent
 env
+alt
+jun
+org
+hans
+nov
+dif
+baba
+roi

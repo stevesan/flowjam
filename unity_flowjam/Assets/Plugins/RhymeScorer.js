@@ -59,8 +59,6 @@ static private var VOWEL_PHONEMES = [
 // the sound of those vowels. Ex: the 'o' in 'sole' is different from 'son'
 static private var SYLLABIC_CONSONANTS = [ "L", "M", "N", "NG", "R" ];
 
-private var mobyWordSet = new HashSet.<String>();
-
 private var vowelSet = new HashSet.<String>();
 private var sylConSet = new HashSet.<String>();
 
@@ -356,7 +354,57 @@ function IsTooSimilar( a:String, b:String )
         || b.IndexOf(a) != -1;
 }
 
-function GetMaxPronunScore( a:String, b:String )
+function GetPhrasePronuns( words:String[] ) : List.< List.<Syllable> >
+{
+    var i = 0;
+
+    var wordProNums = new List.<int>();
+    var wordPros = new List.< List.<List.<Syllable> > >();
+
+    for( i = 0; i < words.length; i++ )
+    {
+        wordProNums.Add(0);
+        wordPros.Add( GetPronuns(words[i]) );
+    }
+
+    //----------------------------------------
+    //  Now enumerate through all possible combinations
+    //----------------------------------------
+    var pros = new List.< List.<Syllable> >();
+
+    while(true)
+    {
+        // build the currently indexed pronunciation
+        var pro = new List.<Syllable>();
+        Debug.Log("--");
+        for( i = 0; i < words.length; i++ )
+            pro.AddRange( wordPros[i][ wordProNums[i] ] );
+        pros.Add(pro);
+
+        // Increment the indices
+        i = words.length-1;
+        while( i >= 0 )
+        {
+            wordProNums[i] = wordProNums[i] + 1;
+
+            if( wordProNums[i] >= wordPros[i].Count )
+            {
+                wordProNums[i] = 0;
+                i--;
+            }
+            else
+                break;
+        }
+        if( i < 0 )
+            // we've gone through all of them
+            break;
+
+    }
+
+    return pros;
+}
+
+function GetMaxWordWordScore( a:String, b:String )
 {
     // find all variants
     var aPros = GetPronuns(a);
@@ -386,7 +434,7 @@ function ScoreWords(a:String, b:String)
     if( IsTooSimilar(a, b) )
         return 0.0;
 
-    return GetMaxPronunScore( a, b );
+    return GetMaxWordWordScore( a, b );
 }
 
 function ScoreWordsWithBonus(a:String, b:String)
@@ -481,6 +529,10 @@ function RunTestCases()
     TestScoreWords('here', 'beer', 1.0);
     TestScoreWords('hen', 'been', 1.0);
     TestScoreWords('cat', 'frat', 1.5);
+
+
+    Utils.Assert( GetPhrasePronuns( ["separate","close"] ).Count == 6 );
+    Utils.Assert( GetPhrasePronuns( ["rose","close"] ).Count == 2 );
 
     Debug.Log('-- Tests done --');
 }
