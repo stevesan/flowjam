@@ -18,7 +18,7 @@ public var difficultyLevels = new List.<DifficultyLevel>();
 
 class Syllable
 {
-    var nucleus:String; // the vowel part, such as the "om" in "homes"
+    var nucleus:String; // the vowel part, such as the "om" in "homes". This can include syllabic-consonants
     var coda:String;    // the ending part, such as the "Z" in "homes"
 
     function Syllable()
@@ -250,6 +250,14 @@ function IsSamePair(a1:String, b1:String, a2:String, b2:String)
         || (a1 == b2 && b1 == a2);
 }
 
+function SyllableMatch( a:Syllable, b:Syllable )
+{
+    if( !NucleiiMatch(a, b) )
+        return false;
+
+    return a.coda == b.coda;
+}
+
 //----------------------------------------
 //  The 'nucleus' is the vowel of the syllable. This is the most important for rhyming.
 //  We have this function here to allow for some hacks.
@@ -350,8 +358,12 @@ function GetPronuns(word:String) : List.< List.<Syllable> >
 
 function IsTooSimilar( a:String, b:String )
 {
-    return a.IndexOf(b) != -1
-        || b.IndexOf(a) != -1;
+    // Don't allow the same word
+    // Don't allow plural variants
+    // Don't allow past tense variants
+    // But allow things like amp vs. camp
+    return( (a.IndexOf(b) == 0 || b.IndexOf(a) == 0 )
+            && Mathf.Abs(a.Length - b.Length) <= 1 );
 }
 
 function GetPhrasePronuns( words:String[] ) : List.< List.<Syllable> >
@@ -376,7 +388,6 @@ function GetPhrasePronuns( words:String[] ) : List.< List.<Syllable> >
     {
         // build the currently indexed pronunciation
         var pro = new List.<Syllable>();
-        Debug.Log("--");
         for( i = 0; i < words.length; i++ )
             pro.AddRange( wordPros[i][ wordProNums[i] ] );
         pros.Add(pro);
@@ -404,11 +415,91 @@ function GetPhrasePronuns( words:String[] ) : List.< List.<Syllable> >
     return pros;
 }
 
-function GetMaxWordWordScore( a:String, b:String )
+function AllNuceliiMatch( a:List.<Syllable>, b:List.<Syllable> )
 {
-    // find all variants
-    var aPros = GetPronuns(a);
-    var bPros = GetPronuns(b);
+    if( a.Count != b.Count )
+        return false;
+
+    for( var i = 0; i < a.Count; i++ )
+    {
+        if( !NucleiiMatch( a[i], b[i] ) )
+            return false;
+    }
+
+    return true;
+}
+
+function AllNucleiiMatchExists( aString:String, bString:String ) : boolean
+{
+    var aa = aString.Split(' '[0]);
+    var bb = bString.Split(' '[0]);
+
+    //----------------------------------------
+    //  
+    //----------------------------------------
+
+    for( var a in aa )
+        if( !IsValidAnswer(a) )
+            return false;
+
+    for( var b in bb )
+        if( !IsValidAnswer(b) )
+            return false;
+
+    if( aa.length == bb.length )
+    {
+        for( var i = 0; i < aa.length; i++ )
+            if( IsTooSimilar(aa[i], bb[i]) )
+                return false;
+    }
+
+    //----------------------------------------
+    //  
+    //----------------------------------------
+    var aPros = GetPhrasePronuns(aa);
+    var bPros = GetPhrasePronuns(bb);
+
+    for( var aSyls in aPros )
+    {
+        for( var bSyls in bPros )
+        {
+            if( AllNuceliiMatch( aSyls, bSyls ) )
+                return true;
+        }
+    }
+    return false;
+}
+
+function ScoreStrings(aString:String, bString:String)
+{
+    var aa = aString.Split(' '[0]);
+    var bb = bString.Split(' '[0]);
+
+    //----------------------------------------
+    //  
+    //----------------------------------------
+
+    for( var a in aa )
+        if( !IsValidAnswer(a) )
+            return 0.0;
+
+    for( var b in bb )
+        if( !IsValidAnswer(b) )
+            return 0.0;
+
+    if( aa.length == bb.length )
+    {
+        for( var i = 0; i < aa.length; i++ )
+            if( IsTooSimilar(aa[i], bb[i]) )
+                return 0.0;
+    }
+
+    //----------------------------------------
+    //  
+    //----------------------------------------
+
+    var aPros = GetPhrasePronuns(aa);
+    var bPros = GetPhrasePronuns(bb);
 
     // get max score of all unique pairings
     var maxScore = 0.0;
@@ -420,26 +511,15 @@ function GetMaxWordWordScore( a:String, b:String )
             maxScore = Mathf.Max( score, maxScore );
 
             if( debug )
-                Debug.Log(a+" ("+ProToString(aSyls)+") "+b+" ("+ProToString(bSyls)+") = "+score);
+                Debug.Log(aString+" ("+ProToString(aSyls)+") "+bString+" ("+ProToString(bSyls)+") = "+score);
         }
     }
     return maxScore;
 }
 
-function ScoreWords(a:String, b:String)
-{
-    if( !IsValidAnswer(a) || !IsValidAnswer(b) )
-        return 0.0;
-
-    if( IsTooSimilar(a, b) )
-        return 0.0;
-
-    return GetMaxWordWordScore( a, b );
-}
-
 function ScoreWordsWithBonus(a:String, b:String)
 {
-    var raw = ScoreWords(a,b);
+    var raw = ScoreStrings(a,b);
 
     // We adjust the score to reflect the fact that rhyming syllables gets much harder they more you already have
     // so, map the score to an x^2 curve, sort of..
@@ -450,89 +530,91 @@ function ScoreWordsWithBonus(a:String, b:String)
     return info;
 }
 
-function TestScoreWords(a:String, b:String, expectedScore:float)
+function TestScoreStrings(a:String, b:String, expectedScore:float)
 {
-    var score = ScoreWords(a, b);
+    var score = ScoreStrings(a, b);
     Utils.Assert(score == expectedScore, "actual = "+score+" expected = "+expectedScore);
 }
 
 function RunTestCases()
 {
-    TestScoreWords('book'    , 'look'     , 1.5);
-    TestScoreWords('fashion' , 'ration'   , 2.5);
-    TestScoreWords('state'   , 'invade'   , 1.0);
-    TestScoreWords('invade'  , 'blade'    , 1.5);
-    TestScoreWords('then'    , 'them'     , 0.0);
-    TestScoreWords('close'   , 'close'    , 0.0);
-    TestScoreWords('rose'    , 'close'    , 1.5);
+    TestScoreStrings('book'    , 'look'     , 1.5);
+    TestScoreStrings('fashion' , 'ration'   , 2.5);
+    TestScoreStrings('state'   , 'invade'   , 1.0);
+    TestScoreStrings('invade'  , 'blade'    , 1.5);
+    TestScoreStrings('then'    , 'them'     , 0.0);
+    TestScoreStrings('close'   , 'close'    , 0.0);
+    TestScoreStrings('rose'    , 'close'    , 1.5);
 
-    TestScoreWords('rose', 'close', 1.5);
+    TestScoreStrings('rose', 'close', 1.5);
 
-    TestScoreWords('out', 'doubt', 1.5);
+    TestScoreStrings('out', 'doubt', 1.5);
 
-    TestScoreWords('proceeding', 'leading', 2.5);
+    TestScoreStrings('proceeding', 'leading', 2.5);
 
-    TestScoreWords('dry', 'why', 1.0);
-    TestScoreWords('try', 'why', 1.0);
-    TestScoreWords('throttle', 'bottle', 2.5);
-    TestScoreWords('rhyme', 'sublime', 1.5);
-    TestScoreWords('climb', 'sublime', 1.5);
-    TestScoreWords('bending', 'spending', 2.5);
-    TestScoreWords('venting', 'ending', 2.0);
-    TestScoreWords('cacophony', 'monopoly', 1.0);
-    TestScoreWords('broccoli', 'monopoly', 3.0);
+    TestScoreStrings('dry', 'why', 1.0);
+    TestScoreStrings('try', 'why', 1.0);
+    TestScoreStrings('throttle', 'bottle', 2.5);
+    TestScoreStrings('rhyme', 'sublime', 1.5);
+    TestScoreStrings('climb', 'sublime', 1.5);
+    TestScoreStrings('bending', 'spending', 2.5);
+    TestScoreStrings('venting', 'ending', 2.0);
+    TestScoreStrings('cacophony', 'monopoly', 1.0);
+    TestScoreStrings('broccoli', 'monopoly', 3.0);
 
-    TestScoreWords('bastion', 'ration', 2.0);
-    TestScoreWords('motion', 'ration', 1.0);
-    TestScoreWords('bottle', 'ration', 0.0);
+    TestScoreStrings('bastion', 'ration', 2.0);
+    TestScoreStrings('motion', 'ration', 1.0);
+    TestScoreStrings('bottle', 'ration', 0.0);
 
-    TestScoreWords('green', 'fiend', 1.0);
-    TestScoreWords('friend', 'mend', 1.5);
-    TestScoreWords('one', 'thumb', 0.0);
+    TestScoreStrings('green', 'fiend', 1.0);
+    TestScoreStrings('friend', 'mend', 1.5);
+    TestScoreStrings('one', 'thumb', 0.0);
 
-    TestScoreWords('love', 'move', 0.0);
-    TestScoreWords('real', 'still', 0.0);
-    TestScoreWords('compromise', 'promise', 0.0);
+    TestScoreStrings('love', 'move', 0.0);
+    TestScoreStrings('real', 'still', 0.0);
+    TestScoreStrings('compromise', 'promise', 0.0);
 
-    TestScoreWords('hollow', 'bottle', 0.0);
+    TestScoreStrings('hollow', 'bottle', 0.0);
 
-    TestScoreWords('monk'    , 'flunk' , 1.5);
-    TestScoreWords('mend'    , 'bend' , 1.5);
-    TestScoreWords('med'    , 'bed' , 1.5);
-    TestScoreWords('met'    , 'bed' , 1.0);
-    TestScoreWords('well'    , 'hell' , 1.0);
-    TestScoreWords('tank'    , 'bang' , 1.0);
+    TestScoreStrings('monk'    , 'flunk' , 1.5);
+    TestScoreStrings('mend'    , 'bend' , 1.5);
+    TestScoreStrings('med'    , 'bed' , 1.5);
+    TestScoreStrings('met'    , 'bed' , 1.0);
+    TestScoreStrings('well'    , 'hell' , 1.0);
+    TestScoreStrings('tank'    , 'bang' , 1.0);
 
-    TestScoreWords('skull'    , 'skulk' , 1.0);
-    TestScoreWords('bulk'    , 'skulk' , 1.5);
-    TestScoreWords('fang'    , 'bank' , 1.0);
-    TestScoreWords('rank'    , 'bank' , 1.5);
-    TestScoreWords('scrunch'    , 'lunch' , 1.5);
+    TestScoreStrings('skull'    , 'skulk' , 1.0);
+    TestScoreStrings('bulk'    , 'skulk' , 1.5);
+    TestScoreStrings('fang'    , 'bank' , 1.0);
+    TestScoreStrings('rank'    , 'bank' , 1.5);
+    TestScoreStrings('scrunch'    , 'lunch' , 1.5);
 
     // check multi-consonant codas
-    TestScoreWords('grasp'    , 'clasped' , 1.0);
-    TestScoreWords('clasp'    , 'grasp' , 1.5);
-    TestScoreWords('broccoli', 'properly', 1.0);
-    TestScoreWords('broccoli', 'locally', 2.0);
-    TestScoreWords('hands', 'dance', 1.0);
+    TestScoreStrings('grasp'    , 'clasped' , 1.0);
+    TestScoreStrings('clasp'    , 'grasp' , 1.5);
+    TestScoreStrings('broccoli', 'properly', 1.0);
+    TestScoreStrings('broccoli', 'locally', 2.0);
+    TestScoreStrings('hands', 'dance', 1.0);
 
     // AH/IH-S special cases
-    TestScoreWords('emptiness', 'friendliness', 2.5);
-    TestScoreWords('abortionist', 'pessimist', 1.5);
+    TestScoreStrings('emptiness', 'friendliness', 2.5);
+    TestScoreStrings('abortionist', 'pessimist', 1.5);
     
-    TestScoreWords('obsessions', 'recession', 2.5);
-    TestScoreWords('obsessions', 'recessions', 3.0);
+    TestScoreStrings('obsessions', 'recession', 2.5);
+    TestScoreStrings('obsessions', 'recessions', 3.0);
     
-    TestScoreWords('wishbone', 'syndrome', 1.0);
-    TestScoreWords('poor', 'floor', 1.0);
-    TestScoreWords('list', 'jist', 1.5);
-    TestScoreWords('here', 'beer', 1.0);
-    TestScoreWords('hen', 'been', 1.0);
-    TestScoreWords('cat', 'frat', 1.5);
-
+    TestScoreStrings('wishbone', 'syndrome', 1.0);
+    TestScoreStrings('poor', 'floor', 1.0);
+    TestScoreStrings('list', 'jist', 1.5);
+    TestScoreStrings('here', 'beer', 1.0);
+    TestScoreStrings('hen', 'been', 1.0);
+    TestScoreStrings('cat', 'frat', 1.5);
 
     Utils.Assert( GetPhrasePronuns( ["separate","close"] ).Count == 6 );
     Utils.Assert( GetPhrasePronuns( ["rose","close"] ).Count == 2 );
+    TestScoreStrings('hardware', 'car share', 2.0);
+    TestScoreStrings('wishbone', 'fish phone', 2.0);
+    TestScoreStrings('bone', 'phone', 1.0);
 
     Debug.Log('-- Tests done --');
 }
@@ -544,9 +626,15 @@ function GetRandomPromptWord(difficulty:int)
     return list[i];
 }
 
-function IsValidAnswer(word:String)
+function IsValidAnswer(phrase:String)
 {
-    return validAnswerWords.Contains(word);
+    var words = phrase.Split(' '[0]);
+
+    for( var word in words )
+        if( !validAnswerWords.Contains(word) )
+            return false;
+
+    return true;
 }
 
 function Awake()

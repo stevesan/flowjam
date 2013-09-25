@@ -1,24 +1,37 @@
 TASK LIST:
 
-ok, early game is good.
+- requiring all syllables feels a bit too hardcore.....
+    maybe we can just require rhyming of the last nucleus+coda 
+    we can visualize syllables with bubbles
+        cuz it does feel good to do multi-syllable rhymes, especially with multiple words!
+        maybe we should save these for special items, since they are just "sit and think" situations.
+            or save it for really hard boss fights
 
+- play with the idea of homonyms - ie. close vs. close?
+
+- sort words by freq, then look at the most common words. figure out which ones are lke..wiki markup
+    cross ref with actual words of course
 MUST RHYME ALL SYLLABLES! allow multi-word entries too!
 
-rhyme fixes:
-    fun vs. when
-    draw vs. raw
-    alt vs. fault
+how to encourage combos?
+
+need a quick tool to before/after syllable-equivalence changes. so i can say like, if i make these syllables rhyme, what changes? what words that previously did not rhyme become rhyming?
+
+debug these:
+    fun / when
+    draw / raw
+    alt / fault
     hog / dog
-
-    TODO: need a quick tool to before/after syllable-equivalence changes. so i can say like, if i make these syllables rhyme, what changes? what words that previously did not rhyme become rhyming?
-
-upgrades/abilities:
-    allow player to use words multiple times
+    attended / amended
+    median / free free run
+    hardware / car share
+    iron / side burn
 
 scoring:
-    more points if you rhyme better..ok
-    count for # words used? less == more points
-    combo multiplier
+    more points if you rhyme better..ok. ie match consonants as well 
+    count for # words used? less == more points. this encourages combos..
+    combo multiplier.. need to make this doable and attractive....maybe you have limited number of bullets? or a challenge could be like "complete room in 3 bullets"
+        we can automatically detect how many rhyme classes there are in a given area! and that can be your "par" challenge. hum!
 
 problems:
     clutter. could make enemy size dependent on word length.
@@ -35,6 +48,7 @@ types of "levels":
     puzzle/exploration, where there are treasures to get if you can rhyme enough. multiple words can form a wall.
         maybe some time-sensitive stuff...like a treasure that goes away. yes, that's it.
         like Cut the Rope's timed stars.
+    can we have puzzles? i don't know. maybe with multiple words we can...?
 
 enemy variables:
     speed
@@ -48,17 +62,16 @@ items:
     breakable blocks
     shape shifting - words change over time. can be a block or an enemy!
     what about letting the player move blocks around? like arrange two sets of words into equivalence classes...hmmm
-
     timed pickups...when the player gets close enough, spawn them with a timer.
 
-- things that must rhyme 2 syllables?
+upgrades/abilities:
+    allow player to use words multiple times? eh, would like to avoid this...just artificially extending the game's life time
+
 - cluster enemies - all parts could have the same word, so you need to find many words that rhyme with it to kill it/get to the reward
 
 - bomb drones, that will kill nearby enemies if you rhyme with them.
     select them with number keys? each number could be a weapon.
 
-- consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
-    hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)
 
 - TUTORIAL SEQUENCE:
     
@@ -267,3 +280,8 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 - timed sequences where you have to rhyme 3 words in a row in order to get a positive reward... like a treasure chest lock...
     how to do this with existing ideas?
     just have the reward behind blocks, and it goes away after time.
+- things that must rhyme 2 syllables?
+    decided to require rhyming ALL syllables, but allow multiple words (like shockwave --> lock rave)
+- consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
+    hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)
+    eh, don't like the wall climbing thing anymore. CANCEL

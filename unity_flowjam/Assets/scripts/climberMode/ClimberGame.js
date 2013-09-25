@@ -101,7 +101,7 @@ private class GameMode
                 feedbackMsg = "Too similar";
             else
             {
-                activeScore = RhymeScorer.main.ScoreWords( input, word );
+                activeScore = RhymeScorer.main.ScoreStrings( input, word );
 
                 if( activeScore == 0 )
                     feedbackMsg = "Doesn't rhyme";

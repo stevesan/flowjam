@@ -98,29 +98,20 @@ public class TopdownGame : MonoBehaviour
             AudioSource.PlayClipAtPoint(cancelClip, player.transform.position);
     }
 
-    public bool AreWordsTooSimilar( string attack, string target )
+    public bool IsEffectiveAgainst( string attackString, string targetWord )
     {
-        // Don't allow the same word
-        // Don't allow plural variants
-        // Don't allow past tense variants
-        // But allow things like amp vs. camp
-        if( (attack.IndexOf(target) == 0 || target.IndexOf(attack) == 0 )
-                && Mathf.Abs(attack.Length - target.Length) <= 1 )
-            return true;
-        return false;
-    }
-
-    public bool IsEffectiveAgainst( string attackWord, string targetWord )
-    {
-        if( !RhymeScorer.main.IsValidAnswer( attackWord ) )
+        if( !RhymeScorer.main.IsValidAnswer( attackString ) )
             return false;
 
-        if( AreWordsTooSimilar( attackWord, targetWord ) )
+        if( RhymeScorer.main.IsTooSimilar( attackString, targetWord ) )
         {
             return false;
         }
 
-        if( RhymeScorer.main.GetMaxWordWordScore( attackWord, targetWord ) == 0 )
+        //if( RhymeScorer.main.ScoreStrings( attackString, targetWord ) == 0 )
+            //return false;
+
+        if( !RhymeScorer.main.AllNucleiiMatchExists( attackString, targetWord ) )
             return false;
 
         return true;
@@ -156,7 +147,7 @@ public class TopdownGame : MonoBehaviour
         {
             UpdateHealth();
 
-            if( Input.GetKeyDown("j") )
+            if( Input.GetKeyDown(KeyCode.Return) )
             {
                 EnterTypingMode();
             }
@@ -165,12 +156,15 @@ public class TopdownGame : MonoBehaviour
         {
             UpdateHealth();
 
-            if( Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Escape) )
+            if( Input.GetKeyDown(KeyCode.Return) )
             {
                 ExitTypingMode(
-                        !Input.GetKeyDown(KeyCode.Escape)
-                        && RhymeScorer.main.IsValidAnswer(input.GetInput())
+                        RhymeScorer.main.IsValidAnswer(input.GetInput())
                         && !usedWords.Contains(input.GetInput()) );
+            }
+            else if( Input.GetKeyDown(KeyCode.Escape) )
+            {
+                ExitTypingMode( false );
             }
             else
             {

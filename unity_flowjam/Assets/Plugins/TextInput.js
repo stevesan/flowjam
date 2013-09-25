@@ -59,7 +59,9 @@ function Update()
             {
                 // ignore numbers
             }
-            else if( (c >= "a"[0] && c <= "z"[0]) || (c >= "A"[0] && c <= "Z"[0]) )
+            else if( (c >= "a"[0] && c <= "z"[0])
+                    || (c >= "A"[0] && c <= "Z"[0])
+                    || c == " "[0] )
             {
                 input += c;
                 input = input.ToLower();
