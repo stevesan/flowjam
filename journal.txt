@@ -1,11 +1,77 @@
 TASK LIST:
 
+- possible progression:
+    allow letter alchemy..ie. trade 2 Cs for an A
+    spelunky-style exploration using words as bombs to blow up rocks, which are words.
+    goal is to get as far as possible
+    maybe some enemies...? some time pressure aspect? is this even necessary?
+        we can definitely use time pressure to switch up the pace.
+        ie. certain segments, you have ALL the letters, but there is time pressure.
+
+    basic idea is, encourage people to come up with rhyming words with a restriction on letters.
+    so, try to come up with the most economical word.
+
+    maneuvers: you can "trade" letters. for example, if you have "june" and you use "moon",
+    you've basically traded two Os for U and E.
+
+    worst vs. first
+
+- use economy of letters as well, so you're not just coming up with words that rhyme, but also words that use letters most efficiently.
+    we can sort of guarantee progression by always making sure we give the right letters
+    they will need to at least rhyme one word they need to progress.
+    so each time you rhyme a word..you get some letters. it would be cool to get those words letters!
+    and if we check only for the last syllable, you can be strategic about which word you rhyme against.
+    for example, if you have cat and bat, but you know you need 'b' to rhyme with 'rub', then you can 
+
+26 letters may be too much to keep track of... what about just vowels?
+    or...make vowels free?
+
+i wanna make this game longer...or at least have some replayability. it would suck to just make this and have it be like a 5-minute novelty..maybe that is its fate, but i'm not ready to give up yet.
+    definitely should not just pad this with generic game mechanics, like leveling up. need to take a new spin on those.
+
+there's nothing wrong with.. "an existing game type with one new thing".
+    i mean, i'm a n00b designer, this is what i should be doing.
+    so I should just take a genre that I love and apply this mechanic to it.
+    However...DEUS EX! But top down. hum...so, immersive stealth..
+
+power up ideas:
+    let you flush your "already used" list
+    slow down - all enemies get slowed a bit
+
+heteronym puzzles: 2 words that rhyme with two different pronunciations of a single word..and you have to figure it out.
+ex: 2 words are: love, drove.  answer: dove ("the dove dove down")
+rose, dose (close)
+row, cow (bow)
+list of heteronyms: http://en.wikipedia.org/wiki/Heteronym_(linguistics)
+    perfect amount for puzzles!
+
+need to hit both at the same time because..laser blocked by two blocks, and the blocks regenerate quickly.
+can teach lasers earlier.
+
+xxxxxxxx
+xL 1 2 B
+x..S...x
+xxxxxxxx
+S = goodie
+L = right-firing laser
+B = block that can be destroyed by laser
+
+- multi syllabe rhymes are good, but some feedback on the syllables would be good..
+
+how to encourage combos?
+    we could explicit design them in, but then there still would be no thought. ie. they could just do it accidentally.
+
 - requiring all syllables feels a bit too hardcore.....
     maybe we can just require rhyming of the last nucleus+coda 
+        maybe we should require this anyway? it's not very satisfying to rhyme just the last syllable.
     we can visualize syllables with bubbles
         cuz it does feel good to do multi-syllable rhymes, especially with multiple words!
         maybe we should save these for special items, since they are just "sit and think" situations.
             or save it for really hard boss fights
+
+ranking of mechanics:
+    rhyme last syllable (nuc + coda)
+    rhyme more syllables (ignoring non-last codas, maybe with multiple words)
 
 - play with the idea of homonyms - ie. close vs. close?
 
@@ -13,11 +79,11 @@ TASK LIST:
     cross ref with actual words of course
 MUST RHYME ALL SYLLABLES! allow multi-word entries too!
 
-how to encourage combos?
 
 need a quick tool to before/after syllable-equivalence changes. so i can say like, if i make these syllables rhyme, what changes? what words that previously did not rhyme become rhyming?
 
 debug these:
+    private / pirate
     fun / when
     draw / raw
     alt / fault
@@ -285,3 +351,7 @@ notes on http://en.wikipedia.org/wiki/Rhyme#Types_of_rhyme
 - consider...not having totally randomized levels?? could we have players find fastest paths on a single wall?
     hexagon is randomized..but each ring is fairly isolated from each other. ie. how you do on one ring has no effect on subsequent rings (except for some anticipation in positioning)
     eh, don't like the wall climbing thing anymore. CANCEL
+PROBLEM: kiting. ppl can just kite..what prevents that? enemies can attack
+SOLUTION: you can totally kite in binding of isaac. but there's the "artificial" restriction that doors will not open until enemies are all killed. so yeah.
+    i suppose this can go either way. you can either let ppl run past stuff (Spelunky, Rogue Legacy), or force them to confront things (Isaac, Everyday Shooter).
+    i mean, in most games, you can speed run and totally ignore the enemies if you know the level well enough.

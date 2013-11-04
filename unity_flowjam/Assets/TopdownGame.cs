@@ -7,7 +7,6 @@ using SteveSharp;
 public class TopdownGame : MonoBehaviour
 {
     public TopdownPlayer player;
-    public TextInput input;
     public Bullet bulletPrefab;
 
     enum State { Loading, Moving, Typing };
@@ -16,18 +15,39 @@ public class TopdownGame : MonoBehaviour
     public GameObject typeModeObjects;
     public GUIText typeModeText;
     public GUIText typeModeFeedback;
+    public GUIText inventoryDisplay;
     public GUIText healthText;
     public AudioClip startTypingClip;
     public AudioClip fireBulletClip;
     public AudioClip cancelClip;
     public LevelSpawner levelSpawner;
+    public LineRenderer linePrefab;
 
     HashSet<string> usedWords = new HashSet<string>();
 
+    HashSet<LineRenderer> targetLines = new HashSet<LineRenderer>();
+
+    Dictionary<char, int> inventory = new Dictionary<char, int>();
+
+    List<char> vowels = new List<char>();
+
+    string rawAttack = "";
+
     void Awake()
     {
+        vowels.Add('a');
+        vowels.Add('e');
+        vowels.Add('i');
+        vowels.Add('o');
+        vowels.Add('u');
+        vowels.Add('y');
+
         typeModeObjects.SetActive(false);
         bulletPrefab.gameObject.SetActive(false);
+        inventoryDisplay.gameObject.SetActive(false);
+
+        foreach( char c in vowels )
+            inventory[c] = Mathf.RoundToInt( Random.value * 10 );
     }
 
     void Reset()
@@ -55,8 +75,8 @@ public class TopdownGame : MonoBehaviour
         player.respondToInput = false;  
         state = State.Typing;
         typeModeObjects.SetActive(true);
-        input.ClearInput();
-        typeModeText.text = "_";
+        typeModeText.text = "TYPE!";
+        rawAttack = "";
         typeModeFeedback.text = "";
         AudioSource.PlayClipAtPoint(startTypingClip, Camera.main.transform.position);
     }
@@ -82,7 +102,7 @@ public class TopdownGame : MonoBehaviour
             {
                 Vector3 toTarget = target.transform.position - player.transform.position;
                 Bullet bullet = Utility.MyInstantiate<Bullet>(bulletPrefab, player.transform.position );
-                bullet.Init(toTarget.normalized, input.GetInput(), this);
+                bullet.Init(toTarget.normalized, rawAttack, this);
                 bulletsFired = true;
 
             }
@@ -92,7 +112,17 @@ public class TopdownGame : MonoBehaviour
         if( bulletsFired )
         {
             AudioSource.PlayClipAtPoint(fireBulletClip, player.transform.position);
-            usedWords.Add( input.GetInput() );
+            usedWords.Add( rawAttack );
+
+            // deduct inventory
+            foreach( char c in rawAttack )
+            {
+                if( Utility.IsVowel(c) )
+                {
+                    Utils.Assert( inventory[c] > 0 );
+                    inventory[c]--;
+                }
+            }
         }
         else
             AudioSource.PlayClipAtPoint(cancelClip, player.transform.position);
@@ -111,7 +141,7 @@ public class TopdownGame : MonoBehaviour
         //if( RhymeScorer.main.ScoreStrings( attackString, targetWord ) == 0 )
             //return false;
 
-        if( !RhymeScorer.main.AllNucleiiMatchExists( attackString, targetWord ) )
+        if( !RhymeScorer.main.AllNucleiiCoverExists( attackString, targetWord ) )
             return false;
 
         return true;
@@ -122,7 +152,7 @@ public class TopdownGame : MonoBehaviour
         if( target == null )
             return false;
 
-        return IsEffectiveAgainst( input.GetInput(), target.GetWord() );
+        return IsEffectiveAgainst( rawAttack, target.GetWord() );
     }
 
     void UpdateHealth()
@@ -130,6 +160,13 @@ public class TopdownGame : MonoBehaviour
         healthText.text = "";
         for( int i = 0; i < player.GetHealth(); i++ )
             healthText.text += "=";
+    }
+
+    void UpdateInventory()
+    {
+        inventoryDisplay.text = "";
+        foreach( char c in vowels )
+            inventoryDisplay.text += c+"-" +inventory[c]+ " ";
     }
 
     void Update()
@@ -141,11 +178,13 @@ public class TopdownGame : MonoBehaviour
                 state = State.Moving;
                 levelSpawner.Spawn();
                 player.transform.position = levelSpawner.GetPlayerStart();
+                inventoryDisplay.gameObject.SetActive(true);
             }
         }
         else if( state == State.Moving )
         {
             UpdateHealth();
+            UpdateInventory();
 
             if( Input.GetKeyDown(KeyCode.Return) )
             {
@@ -155,12 +194,36 @@ public class TopdownGame : MonoBehaviour
         else if( state == State.Typing )
         {
             UpdateHealth();
+            UpdateInventory();
+
+            foreach( char c in Input.inputString )
+            {
+                // Backspace - Remove the last character
+                if( c == '\b' )
+                {
+                    if( rawAttack.Length != 0 )
+                        rawAttack = rawAttack.Substring(0, rawAttack.Length - 1);
+                }
+                else if( (c >= "a"[0] && c <= "z"[0])
+                        || (c >= "A"[0] && c <= "Z"[0])
+                        || c == " "[0] )
+                {
+                    char lc = System.Char.ToLower(c);
+                    if( Utility.IsVowel(lc) )
+                    {
+                        if( inventory[lc] > 0 )
+                            rawAttack += lc;
+                        else
+                            Debug.Log("out of vowel "+c);
+                    }
+                    else
+                        rawAttack += lc;
+                }
+            }
 
             if( Input.GetKeyDown(KeyCode.Return) )
             {
-                ExitTypingMode(
-                        RhymeScorer.main.IsValidAnswer(input.GetInput())
-                        && !usedWords.Contains(input.GetInput()) );
+                ExitTypingMode( RhymeScorer.main.IsValidAnswer(rawAttack) );
             }
             else if( Input.GetKeyDown(KeyCode.Escape) )
             {
@@ -168,21 +231,16 @@ public class TopdownGame : MonoBehaviour
             }
             else
             {
-                typeModeText.text = "["+input.GetInput()+"]";
+                typeModeText.text = "["+rawAttack+"]";
 
-                if( input.GetInput().Length == 0 )
+                if( rawAttack.Length == 0 )
                 {
                     typeModeText.color = Color.white;
-                    typeModeFeedback.text = "type";
+                    typeModeText.text = "type!";
+                    typeModeFeedback.text = "";
                     typeModeFeedback.color = Color.white;
                 }
-                else if( usedWords.Contains(input.GetInput() ) )
-                {
-                    typeModeText.color = Color.white;
-                    typeModeFeedback.text = "already used!";
-                    typeModeFeedback.color = Color.white;
-                }
-                else if( RhymeScorer.main.IsValidAnswer( input.GetInput() ) )
+                else if( RhymeScorer.main.IsValidAnswer( rawAttack ) )
                 {
                     // gather enemies within radius
                     // highlight them if their word rhymes with this one
@@ -197,6 +255,7 @@ public class TopdownGame : MonoBehaviour
                         {
                             canAttackAny = true;
                             target.OnIsInDanger();
+                            ShowLine(target);
                         }
                         else
                             target.OnIsNotInDanger();
@@ -205,7 +264,7 @@ public class TopdownGame : MonoBehaviour
                     if( canAttackAny )
                     {
                         typeModeText.color = Color.red;
-                        typeModeFeedback.text = "space to attack!";
+                        typeModeFeedback.text = "enter to attack!";
                         typeModeFeedback.color = Color.red;
                     }
                     else
@@ -222,6 +281,22 @@ public class TopdownGame : MonoBehaviour
                         typeModeFeedback.color = Color.white;
                 }
             }
+        }
+    }
+
+    void ShowLine( Attackable target )
+    {
+    }
+
+    void OnAttackableDie( Attackable victim )
+    {
+        Debug.Log("killed "+victim.word.text );
+
+        // give all letters as inventory
+        foreach( char c in victim.word.text )
+        {
+            if( inventory.ContainsKey(c) )
+                inventory[c]++;
         }
     }
 }

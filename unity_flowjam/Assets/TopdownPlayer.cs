@@ -13,6 +13,9 @@ public class TopdownPlayer : MonoBehaviour
     public GameObject hurtFx;
     public AudioClip healClip;
     public GameObject healFx;
+    public MeshRenderer renderer;
+
+    bool isDead = false;
 
     float graceTime = 0f;
     int health;
@@ -33,7 +36,7 @@ public class TopdownPlayer : MonoBehaviour
     {
         inputDir = Vector3.zero;
 
-        if( respondToInput )
+        if( respondToInput && !isDead )
         {
             if( Input.GetKey("w") )
                 inputDir += new Vector3(0,0,1);
@@ -46,6 +49,16 @@ public class TopdownPlayer : MonoBehaviour
         }
 
         graceTime -= Time.deltaTime;
+
+        if( graceTime > 0 )
+        {
+            renderer.enabled =
+                Mathf.FloorToInt(graceTime/0.1f) % 2 == 0;
+        }
+        else
+        {
+            renderer.enabled = true;
+        }
     }
 	
 	// Update is called once per frame
@@ -73,6 +86,11 @@ public class TopdownPlayer : MonoBehaviour
             graceTime = 2f;
             AudioSource.PlayClipAtPoint( hurtClip, transform.position );
             Utility.Instantiate(hurtFx, transform.position);
+
+            if( health == 0 )
+            {
+                isDead = true;
+            }
             return;
         }
 

@@ -3,10 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using SteveSharp;
 
-public class DroneEnemy : MonoBehaviour {
-
-    public float speed;
+public class DroneEnemy : MonoBehaviour
+{
     public bool moveTowardsPlayer;
+
+    float antiCrowdingCheckRadius = 10f;
+    float antiCrowdingMoveWeight = 1f;
 
     TopdownMover mover;
     TopdownPlayer player;
@@ -44,15 +46,31 @@ public class DroneEnemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update()
     {
+        Vector3 toPlayerMove = Vector3.zero;
+
         if( moveTowardsPlayer && playerHasSeen )
         {
-            Vector3 move = player.transform.position - transform.position;
-            mover.SetMove(move.normalized);
+            toPlayerMove = (player.transform.position - transform.position).normalized;
         }
-        else
+
+        // Avoid others
+        Vector3 antiCrowdingMove = Vector3.zero;
+
+        foreach( Collider col in Physics.OverlapSphere( transform.position, antiCrowdingCheckRadius ) )
         {
-            mover.SetMove(Vector3.zero);
+            DroneEnemy otherEnemy = Utility.FindAncestor<DroneEnemy>(col.gameObject);
+
+            if( otherEnemy != null && otherEnemy != this && Vector3.Distance(col.gameObject.transform.position, transform.position) < antiCrowdingCheckRadius)
+            {
+                Vector3 away = transform.position - col.transform.position;
+                float weight = Mathf.Pow( 1 - (away.magnitude / antiCrowdingCheckRadius), 1f );
+                Utils.Assert( weight >= 0f );
+                antiCrowdingMove += away.normalized * weight;
+                Debug.DrawLine( transform.position, col.transform.position, Color.red );
+            }
         }
+
+        mover.SetMove( (toPlayerMove + antiCrowdingMoveWeight*antiCrowdingMove.normalized).normalized );
 	}
 
     void OnEnterPlayerVisibility( PlayerVisibility vis )

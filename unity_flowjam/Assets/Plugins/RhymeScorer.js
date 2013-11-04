@@ -336,6 +336,11 @@ function ScorePronuns( aSyls:List.<Syllable>, bSyls:List.<Syllable> )
     return score;
 }
 
+function GetNumSyllables( word:String ) : int
+{
+    return proDict[word].Count;
+}
+
 function GetPronuns(word:String) : List.< List.<Syllable> >
 {
     word = word.ToLower();
@@ -415,21 +420,26 @@ function GetPhrasePronuns( words:String[] ) : List.< List.<Syllable> >
     return pros;
 }
 
-function AllNuceliiMatch( a:List.<Syllable>, b:List.<Syllable> )
+function AllNucleiiCovered( a:List.<Syllable>, b:List.<Syllable> )
 {
-    if( a.Count != b.Count )
+    if( a.Count < b.Count )
         return false;
 
-    for( var i = 0; i < a.Count; i++ )
+    for( var k = 0; k < b.Count; k++ )
     {
-        if( !NucleiiMatch( a[i], b[i] ) )
+        var i = a.Count-1-k;
+        var j = b.Count-1-k;
+        if( !NucleiiMatch( a[i], b[j] ) )
             return false;
     }
 
     return true;
 }
 
-function AllNucleiiMatchExists( aString:String, bString:String ) : boolean
+//----------------------------------------
+//  Returns true if the tail of a's covers all of b
+//----------------------------------------
+function AllNucleiiCoverExists( aString:String, bString:String ) : boolean
 {
     var aa = aString.Split(' '[0]);
     var bb = bString.Split(' '[0]);
@@ -438,13 +448,11 @@ function AllNucleiiMatchExists( aString:String, bString:String ) : boolean
     //  
     //----------------------------------------
 
-    for( var a in aa )
-        if( !IsValidAnswer(a) )
-            return false;
+    if( !IsValidAnswer(aString) )
+        return false;
 
-    for( var b in bb )
-        if( !IsValidAnswer(b) )
-            return false;
+    if( !IsValidAnswer(bString) )
+        return false;
 
     if( aa.length == bb.length )
     {
@@ -463,7 +471,7 @@ function AllNucleiiMatchExists( aString:String, bString:String ) : boolean
     {
         for( var bSyls in bPros )
         {
-            if( AllNuceliiMatch( aSyls, bSyls ) )
+            if( AllNucleiiCovered( aSyls, bSyls ) )
                 return true;
         }
     }
@@ -615,6 +623,7 @@ function RunTestCases()
     TestScoreStrings('hardware', 'car share', 2.0);
     TestScoreStrings('wishbone', 'fish phone', 2.0);
     TestScoreStrings('bone', 'phone', 1.0);
+    Utils.Assert( AllNucleiiCoverExists('refinance', 'finance') );
 
     Debug.Log('-- Tests done --');
 }

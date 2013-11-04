@@ -6,8 +6,13 @@ public class TopdownMover : MonoBehaviour
     public float fullSpeed = 100f;
     public float activeMaxAccel = 300f;
     public float passiveMaxAccel = 100f;
+    public bool smoothDirChange = false;
+    public float smoothDirTime = 0.2f;
 
     Vector3 move = Vector3.zero;
+
+    Vector3 dirVelocity = Vector3.zero;
+    Vector3 targetMove = Vector3.zero;
 
 	// Use this for initialization
 	void Start()
@@ -19,11 +24,19 @@ public class TopdownMover : MonoBehaviour
     //----------------------------------------
     public void SetMove( Vector3 move )
     {
-        this.move = move;
+        if( smoothDirChange )
+            this.targetMove = move;
+        else
+            this.move = move;
+
     }
 
     void Update()
     {
+        if( smoothDirChange )
+        {
+            this.move = Vector3.SmoothDamp( this.move, this.targetMove, ref this.dirVelocity, smoothDirTime );
+        }
     }
 	
 	// Update is called once per frame

@@ -63,6 +63,17 @@ namespace SteveSharp
         {
             return (x - from) / (to - from);
         }
+
+        public static bool IsVowel( char c )
+        {
+            char lc = System.Char.ToLower(c);
+            return c == 'a'
+                || c == 'e'
+                || c == 'i'
+                || c == 'o'
+                || c == 'u'
+                || c == 'y';
+        }
     }
 
 }
