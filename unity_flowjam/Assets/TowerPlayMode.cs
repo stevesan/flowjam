@@ -12,6 +12,9 @@ public class TowerPlayMode : MonoBehaviour
     public GUIText playerInputDisplay;
     public GUIText scoreDisplay;
     public TowerDisplay tower;
+    public AudioClip letterDestroySound;
+    public AudioClip riseSound;
+    public AudioClip gameOverSound;
 
     string playerInput;
     int score = 0;
@@ -103,7 +106,9 @@ public class TowerPlayMode : MonoBehaviour
                         done = false;
                         tower.ClearBlock(x,y);
                         score++;
-                        yield return new WaitForSeconds(0.5f);
+
+                        AudioSource.PlayClipAtPoint( letterDestroySound, transform.position );
+                        yield return new WaitForSeconds(0.4f);
                     }
                 }
 
@@ -139,10 +144,12 @@ public class TowerPlayMode : MonoBehaviour
 
             if( tower.TopRowOccupied() )
             {
+                AudioSource.PlayClipAtPoint( gameOverSound, transform.position );
                 state = "gameover";
             }
             else
             {
+                AudioSource.PlayClipAtPoint( riseSound, transform.position );
                 tower.PushRow();
                 playerInput = "";
                 state = "playing";
