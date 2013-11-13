@@ -33,21 +33,22 @@ public class TopdownGame : MonoBehaviour
 
     string rawAttack = "";
 
+    bool IsLimitedLetter( char c )
+    {
+        return true;
+    }
+
     void Awake()
     {
-        vowels.Add('a');
-        vowels.Add('e');
-        vowels.Add('i');
-        vowels.Add('o');
-        vowels.Add('u');
-        vowels.Add('y');
-
         typeModeObjects.SetActive(false);
         bulletPrefab.gameObject.SetActive(false);
         inventoryDisplay.gameObject.SetActive(false);
 
-        foreach( char c in vowels )
-            inventory[c] = Mathf.RoundToInt( Random.value * 10 );
+        for( char c = 'a'; c <= 'z'; c++ )
+        {
+            if( IsLimitedLetter(c) )
+                inventory[c] = 1;
+        }
     }
 
     void Reset()
@@ -114,18 +115,18 @@ public class TopdownGame : MonoBehaviour
             AudioSource.PlayClipAtPoint(fireBulletClip, player.transform.position);
             usedWords.Add( rawAttack );
 
-            // deduct inventory
-            foreach( char c in rawAttack )
-            {
-                if( Utility.IsVowel(c) )
-                {
-                    Utils.Assert( inventory[c] > 0 );
-                    inventory[c]--;
-                }
-            }
         }
         else
+        {
+            // refund letters
+            foreach( char c in rawAttack )
+            {
+                if( IsLimitedLetter(c) )
+                    inventory[c]++;
+            }
+
             AudioSource.PlayClipAtPoint(cancelClip, player.transform.position);
+        }
     }
 
     public bool IsEffectiveAgainst( string attackString, string targetWord )
@@ -165,8 +166,8 @@ public class TopdownGame : MonoBehaviour
     void UpdateInventory()
     {
         inventoryDisplay.text = "";
-        foreach( char c in vowels )
-            inventoryDisplay.text += c+"-" +inventory[c]+ " ";
+        foreach( char c in inventory.Keys )
+            inventoryDisplay.text += System.Char.ToUpper(c)+"" +inventory[c]+ " ";
     }
 
     void Update()
@@ -201,20 +202,28 @@ public class TopdownGame : MonoBehaviour
                 // Backspace - Remove the last character
                 if( c == '\b' )
                 {
-                    if( rawAttack.Length != 0 )
+                    if( rawAttack.Length > 0 )
+                    {
+                        // refund
+                        inventory[ rawAttack[ rawAttack.Length-1 ] ]++;
+
                         rawAttack = rawAttack.Substring(0, rawAttack.Length - 1);
+                    }
                 }
                 else if( (c >= "a"[0] && c <= "z"[0])
                         || (c >= "A"[0] && c <= "Z"[0])
                         || c == " "[0] )
                 {
                     char lc = System.Char.ToLower(c);
-                    if( Utility.IsVowel(lc) )
+                    if( IsLimitedLetter(lc) )
                     {
                         if( inventory[lc] > 0 )
+                        {
                             rawAttack += lc;
+                            inventory[lc]--;
+                        }
                         else
-                            Debug.Log("out of vowel "+c);
+                            Debug.Log("out of letter "+c);
                     }
                     else
                         rawAttack += lc;

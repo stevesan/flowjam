@@ -118,6 +118,8 @@ public class Attackable : MonoBehaviour
     {
         if( crosshair != null )
             crosshair.SetActive(false);
+        else
+            word.color = Color.white;
     }
 
     public string GetWord()

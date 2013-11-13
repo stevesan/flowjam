@@ -1,5 +1,48 @@
 TASK LIST:
 
+- maybe give words according to what letters the player is out of..
+- ok, i think we definitely need to design the word selection a bit. random is pointless...
+    we need to kind of put a simple puzzle in there. like, maybe 
+    right now it may be a bit too easy. or it's unclear when it's game over.
+
+less words --> harder
+can have word preview, like tetris, so you can plan strategically
+maybe setup certain "sequence of events", based on what letters the player has...
+there are certain ways we can "get" the player, like with Rs, which are pretty unique.
+
+'time' vs. 'mine'
+- make multi-rhymes guaranteed doable within the same "room"
+- give preview of the net-result of inventory, ie. what you'll lose and gain from doing this.
+- mining for rhymes...
+- colored bars for letter inventory
+
+- "strict vowels" - vowels that can only be spelled 1 way
+    a rack
+    o home
+    or fork
+    ou round
+    u drug
+
+    are there ways that we can get these letters?
+
+    now there's a HUGE incentive for multi-rhymes!!! somehow give players more options for this??
+
+    ok the space makes a HUGe difference. there was a moment where i decided to blow up another rock because that would put me in position for a multi-rhyme!
+
+- NOT DOING:
+    allow word crafting?? vowels cost 3 other letters, others cost 2 others.
+    i only want this when i seem to get stuck...but really could the game just detect
+    impossible situations and declare game over? like Stickets?
+    yeah i think crafting would almost make the game too easy.... at least it would make it harder to detect game over.
+
+- i like that you can move around the map, revisit old words (which have value now!)
+
+- another possibility: get gold to buy letters. we can still declare game over when you run out of gold.
+
+maybe each "strict vowel" gives you a gold to compensate?
+
+also think about how we can use multi-shots to compensate..
+
 - possible progression:
     allow letter alchemy..ie. trade 2 Cs for an A
     spelunky-style exploration using words as bombs to blow up rocks, which are words.
@@ -15,6 +58,23 @@ TASK LIST:
     you've basically traded two Os for U and E.
 
     worst vs. first
+
+    ok so far this is getting interesting. it becomes a game about choosing which vowels to use in order to make a certain sound. we should encoruage this...by reducing the number of FORCED choices.
+    ie. the 'a' vowel in "rack" is pretty much only spellable with 'a', which is a forced choice.
+    on the other hand, vowels like 'raid' can be spelled in many ways, like 'made' and 'grey'
+
+    so, bonus points for matching the coda?
+
+    good examples:
+    share -> air, heir
+    so with these syllabic maneuvars, you can shuffle your vowel-inventory
+
+    finding a rhyming word with the same syllables is relatively easy..
+    it's cool to have to think about how to get certain syllables by rhyming them with a non-symmetric word..
+    "non-symmetric rhymer" is a word that rhymes but does not use the same vowels.
+
+    hmm just trading vowels is too easy.
+
 
 - use economy of letters as well, so you're not just coming up with words that rhyme, but also words that use letters most efficiently.
     we can sort of guarantee progression by always making sure we give the right letters

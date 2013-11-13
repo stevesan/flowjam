@@ -5,6 +5,7 @@ import System.Collections.Generic;
 var cmuDatabase:TextAsset;
 var wikipediaFreqDatabase:TextAsset;
 var banList:TextAsset;
+var loadOnAwake = true;
 
 var debug = false;
 var statusText:GUIText;
@@ -44,6 +45,7 @@ private var validAnswerWords = HashSet.<String>();
 private var difficulty2words = new List.< List.<String> >();
 private var bannedWords = new HashSet.<String>();
 
+private var loading = false;
 private var ready = false;
 
 static public var main:RhymeScorer;
@@ -105,7 +107,7 @@ function ParseWordFrequencyCSV( lines:String[] )
     for( line in lines )
     {
         count++;
-        if( count % 5000 == 0 )
+        if( count % 10000 == 0 )
         {
             statusText.text = "Parsing Frequency database.."+ (1.0*count/lines.Length*100).ToString("0.00")+"%";
             yield;
@@ -144,7 +146,7 @@ function ParseCMUDatabase( lines:String[] )
     for( line in lines )
     {
         count++;
-        if( count % 5000 == 0 )
+        if( count % 10000 == 0 )
         {
             statusText.text = "Parsing CMU database.."+ (1.0*count/lines.Length*100).ToString("0.00")+"%";
             yield;
@@ -659,8 +661,22 @@ function Awake()
         sylConSet.Add(SYLLABIC_CONSONANTS[i]);
 }
 
-function Start()
+function Load()
 {
+    if( GetIsReady() )
+    {
+        Debug.Log("Load called, but already loaded");
+        return;
+    }
+
+    if( loading )
+    {
+        Debug.LogError("Called load while already loading!!");
+        return;
+    }
+
+    loading = true;
+
     //----------------------------------------
     //  Parse database into dictionary
     //----------------------------------------
@@ -706,7 +722,7 @@ function Start()
             // But allow the user to answer with a word despite commonness
             validAnswerWords.Add(key);
 
-            if( key.length > 2  // we tend to get a lot of these...like chemistry elements, heh. discount them completely.
+            if( key.length > 2  // we tend to get a lot of these 2 letter words...like chemistry elements, heh. discount them completely.
                     && word2freq.ContainsKey(key)
                     && !bannedWords.Contains(key) )
             {
@@ -731,6 +747,17 @@ function Start()
     RunTestCases();
     ready = true;
     statusText.text = "";
+
+    loading = false;
+}
+
+function Start()
+{
+    if( !loadOnAwake )
+        return;
+    else
+        Load();
+
 }
 
 
