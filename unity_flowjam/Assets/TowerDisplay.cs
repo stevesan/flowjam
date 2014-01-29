@@ -7,12 +7,18 @@ public class TowerDisplay : MonoBehaviour
     public char emptyChar = '-';
     public int width = 3;
     public int height = 10;
+    public Color highlightColor = Color.yellow;
+    public Color attackableColor = Color.red;
+
+    public bool attackOK = false;
 
     class Entry
     {
         public char c;
         public GUIText display;
         public bool marked;
+        public bool toprow;
+        public TowerDisplay parent;
 
         public void Reset(char newChar)
         {
@@ -29,10 +35,20 @@ public class TowerDisplay : MonoBehaviour
         public void Update()
         {
             display.text = ""+System.Char.ToUpper(c);
-            if( marked )
-                display.color = Color.green;
-            else
-                display.color = Color.white;
+            if( toprow )
+                display.color = Color.red;
+            else 
+            { 
+                if( marked )
+                {
+                    if( parent.attackOK )
+                        display.color = parent.attackableColor;
+                    else
+                        display.color = parent.highlightColor;
+                }
+                else
+                    display.color = Color.white;
+            }
         }
     }
     Entry[,] grid;
@@ -41,8 +57,18 @@ public class TowerDisplay : MonoBehaviour
     public Vector2 bottomLeftPixelOfs;
     public bool debugControls;
 
-    void Awake()
+    public void Reset(int width, int height)
     {
+        if( grid != null )
+        {
+            for( int x = 0; x < grid.GetLength(0); x++ )
+                for( int y = 0; y < grid.GetLength(1); y++ )
+                    Destroy(grid[x,y].display.gameObject);
+        }
+
+        this.width = width;
+        this.height = height;
+
         grid = new Entry[width, height];
         for( int x = 0; x < width; x++ )
         for( int y = 0; y < height; y++ )
@@ -55,21 +81,13 @@ public class TowerDisplay : MonoBehaviour
             grid[x,y].display.pixelOffset = 
                 bottomLeftPixelOfs +
                 new Vector2( x * 25, y * 35 );
+            grid[x,y].Reset(emptyChar);
+            grid[x,y].parent = this;
         }
-    }
 
-	// Use this for initialization
-	void Start()
-    {
-	}
-
-    public void Reset()
-    {
+        // top row red
         for( int x = 0; x < width; x++ )
-        for( int y = 0; y < height; y++ )
-        {
-            grid[x,y].Reset( emptyChar );
-        }
+            grid[x, height-1].toprow = true;
     }
 
 	// Update is called once per frame
@@ -104,6 +122,16 @@ public class TowerDisplay : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    public void PushBlock( int cx, char letter )
+    {
+        // push up
+        for( int y = height-1; y > 0; y-- )
+        {
+            grid[cx,y].Copy( grid[cx,y-1] );
+        }
+        grid[cx, 0].Reset( letter );
     }
 
     public void PushRow()
@@ -204,5 +232,18 @@ public class TowerDisplay : MonoBehaviour
         }
 
         return maxX;
+    }
+
+    public bool Contains( char c )
+    {
+        for( int x = 0; x < width; x++ )
+        for( int y = 0; y < height; y++ )
+        {
+            if( System.Char.ToUpper( grid[x,y].c ) == System.Char.ToUpper(c) )
+                return true;
+        }
+
+        return false;
+
     }
 }

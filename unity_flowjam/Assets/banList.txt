@@ -36,3 +36,5 @@ hull
 ric
 oct
 mas
+singh
+das

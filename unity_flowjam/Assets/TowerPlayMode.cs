@@ -5,21 +5,32 @@ using SteveSharp;
 
 public class TowerPlayMode : MonoBehaviour
 {
-    public int difficulty = 0;
+    public int wordLevel = 0;
     public int numWords = 3;
     public int numInitRows = 5;
     public GUIText wordPrefab;
-    public GUIText playerInputDisplay;
+    public GUIText answerDisplay;
+    public GUIText feedbackDisplay;
     public GUIText scoreDisplay;
+    public GUIText countdown;
     public TowerDisplay tower;
     public AudioClip letterDestroySound;
     public AudioClip riseSound;
     public AudioClip gameOverSound;
 
+    public int difficulty = 0;
+    public bool timedAdd = false;
+    public bool addPerTurn = true;
+    public bool addExtraLetters = false;
+
+    public float rowPeriod = 5f;
+
     string playerInput;
     int score = 0;
 
     string state = "playing";
+
+    float rowCountdown = 0f;
 
     List<string> words = new List<string>();
     List<GUIText> wordDisplays = new List<GUIText>();
@@ -56,7 +67,7 @@ public class TowerPlayMode : MonoBehaviour
 
         for( int i = 0; i < numWords; i++ )
         {
-            string word = RhymeScorer.main.GetRandomPromptWord(difficulty);
+            string word = RhymeScorer.main.GetRandomPromptWord(wordLevel);
             words.Add(word);
             wordDisplays[i].text = words[i];
         }
@@ -64,9 +75,11 @@ public class TowerPlayMode : MonoBehaviour
         playerInput = "";
         score = 0;
 
-        tower.Reset();
+        tower.Reset( 3+difficulty, 10 );
         for( int i = 0; i < numInitRows; i++ )
             tower.PushRow();
+
+        rowCountdown = rowPeriod;
 
         state = "playing";
     }
@@ -84,7 +97,7 @@ public class TowerPlayMode : MonoBehaviour
                 string word = words[i];
                 if( RhymeScorer.main.ScoreStrings( playerInput, word ) >= 1.0f )
                 {
-                    words[i] = RhymeScorer.main.GetRandomPromptWord(difficulty);
+                    words[i] = RhymeScorer.main.GetRandomPromptWord(wordLevel);
                     gotSome = true;
                 }
             }
@@ -93,6 +106,18 @@ public class TowerPlayMode : MonoBehaviour
         if( gotSome )
         {
             usedWords.Add(playerInput);
+            string oldInput = playerInput;
+            playerInput = "";
+
+            List<char> extraLetters = new List<char>();
+            if( addExtraLetters )
+            {
+                foreach( char c in oldInput )
+                {
+                    if( !tower.Contains(c) )
+                        extraLetters.Add(c);
+                }
+            }
 
             while(true)
             {
@@ -119,7 +144,7 @@ public class TowerPlayMode : MonoBehaviour
             /* Old code where each letter removes all instances in the tower
             // remove letters from tower
             HashSet<char> inputChars = new HashSet<char>();
-            foreach( char c in playerInput )
+            foreach( char c in oldInput )
                 inputChars.Add(System.Char.ToLower(c));
 
             // Need multiple passes..
@@ -142,6 +167,21 @@ public class TowerPlayMode : MonoBehaviour
             }
             */
 
+            if( addPerTurn )
+                tower.PushRow();
+
+            if( addExtraLetters )
+            {
+                int col = 0;
+                foreach( char c in extraLetters )
+                {
+                    AudioSource.PlayClipAtPoint( letterDestroySound, transform.position );
+                    tower.PushBlock( col, c );
+                    col = (col+1) % tower.width;
+                    yield return new WaitForSeconds(0.4f);
+                }
+            }
+
             if( tower.TopRowOccupied() )
             {
                 AudioSource.PlayClipAtPoint( gameOverSound, transform.position );
@@ -150,8 +190,6 @@ public class TowerPlayMode : MonoBehaviour
             else
             {
                 AudioSource.PlayClipAtPoint( riseSound, transform.position );
-                tower.PushRow();
-                playerInput = "";
                 state = "playing";
             }
         }
@@ -184,17 +222,62 @@ public class TowerPlayMode : MonoBehaviour
         }
 
     }
+
+    void UpdateInputAndWordList()
+    {
+        for( int i = 0; i < words.Count; i++ )
+        {
+            string word = words[i];
+            wordDisplays[i].text = word;
+        }
+
+        bool anyAttackable = false;
+
+        if( usedWords.Contains(playerInput) )
+            feedbackDisplay.text = "Already used!";
+        else if( playerInput.Length > 1 && !RhymeScorer.main.IsValidAnswer(playerInput) )
+            feedbackDisplay.text = "Not a word!";
+        else
+        {
+            // highlight vulnerable words
+            bool anyTooSimilar = false;
+            if( RhymeScorer.main.IsValidAnswer( playerInput ) )
+            {
+                for( int i = 0; i < words.Count; i++ )
+                {
+                    string word = words[i];
+                    if( RhymeScorer.main.ScoreStrings( playerInput, word ) > 0 )
+                    {
+                        wordDisplays[i].text = word + " <--";
+                        anyAttackable = true;
+                    }
+                    else if( RhymeScorer.main.IsTooSimilar(playerInput, word ) )
+                    {
+                        anyTooSimilar = true;
+                    }
+                }
+            }
+
+            if( anyAttackable )
+                feedbackDisplay.text = "ENTER TO ATTACK!";
+            else if( anyTooSimilar )
+                feedbackDisplay.text = "Too similar!";
+            else
+                feedbackDisplay.text = "Does not rhyme..";
+        }
+
+        tower.attackOK = anyAttackable;
+    }
 	
 	// Update is called once per frame
 	void Update()
     {
+        scoreDisplay.text = "SCORE: "+score;
+        answerDisplay.text = "["+playerInput+"]";
+
         if( state == "playing" )
         {
             HandleInput();
-
-            scoreDisplay.text = "SCORE: "+score;
-
-            playerInputDisplay.text = "["+playerInput+"]";
 
             //----------------------------------------
             //  Process other keys
@@ -209,29 +292,7 @@ public class TowerPlayMode : MonoBehaviour
             }
             else
             {
-                if( usedWords.Contains(playerInput) )
-                    playerInputDisplay.text += "\nused!";
-                else if( playerInput.Length > 1 && !RhymeScorer.main.IsValidAnswer(playerInput) )
-                    playerInputDisplay.text += "\nnot a word!";
-
-                for( int i = 0; i < words.Count; i++ )
-                {
-                    string word = words[i];
-                    wordDisplays[i].text = word;
-                }
-
-                // highlight vulnerable words
-                if( RhymeScorer.main.IsValidAnswer( playerInput ) )
-                {
-                    for( int i = 0; i < words.Count; i++ )
-                    {
-                        string word = words[i];
-                        if( RhymeScorer.main.ScoreStrings( playerInput, word ) > 0 )
-                            wordDisplays[i].text = word + " <-- ENTER TO ATTACK";
-                        else if( RhymeScorer.main.IsTooSimilar(playerInput, word ) )
-                            wordDisplays[i].text = word + " <-- TOO SIMILAR";
-                    }
-                }
+                UpdateInputAndWordList();
 
                 //----------------------------------------
                 //  Highlight letters in tower that are vulnerable
@@ -247,11 +308,37 @@ public class TowerPlayMode : MonoBehaviour
                     }
                 }
             }
+
+            //----------------------------------------
+            //  Timed rows
+            //----------------------------------------
+            if( timedAdd )
+            {
+                rowCountdown -= Time.deltaTime;
+                if( rowCountdown < 0 )
+                {
+                    tower.PushRow();
+                    if( tower.TopRowOccupied() )
+                    {
+                        AudioSource.PlayClipAtPoint( gameOverSound, transform.position );
+                        state = "gameover";
+                    }
+                    rowCountdown = rowPeriod;
+                }
+                countdown.text = ""+Mathf.CeilToInt(rowCountdown);
+            }
+            else
+                countdown.text = "";
+        }
+        else if( state == "animating" )
+        {
+            HandleInput();
+            UpdateInputAndWordList();
         }
         else if( state == "gameover" )
         {
             scoreDisplay.text = "SCORE: "+score;
-            playerInputDisplay.text = "TEH GAME OVER\npress space to try again";
+            answerDisplay.text = "TEH GAME OVER\nSpace to restart";
 
             if( Input.GetKeyDown(KeyCode.Space) )
                 Reset();
