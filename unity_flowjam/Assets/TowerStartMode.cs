@@ -73,7 +73,7 @@ public class TowerStartMode : MonoBehaviour
             {
                 playMode.difficulty = 0;
                 playMode.timedAdd = false;
-                playMode.addPerTurn = false;
+                playMode.addPerTurn = true;
                 playMode.addExtraLetters = true;
                 ToPlayMode();
             }

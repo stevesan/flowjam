@@ -167,9 +167,6 @@ public class TowerPlayMode : MonoBehaviour
             }
             */
 
-            if( addPerTurn )
-                tower.PushRow();
-
             if( addExtraLetters )
             {
                 int col = 0;
@@ -181,6 +178,9 @@ public class TowerPlayMode : MonoBehaviour
                     yield return new WaitForSeconds(0.4f);
                 }
             }
+
+            if( addPerTurn )
+                tower.PushRow();
 
             if( tower.TopRowOccupied() )
             {
