@@ -57,6 +57,22 @@ static private var VOWEL_PHONEMES = [
         "OW", "OY",
         "UH", "UW"];
 
+// This is where we list exceptions. For example, "team" and "teen" should count as rhyming,
+// even though they have slightly different phonemes.
+static private var NONEXACT_EQUIVALENT_NUCLEII = [
+    "OW_N", "OW_M", // wishbone, syndrome
+    "IY_R", "IH_R", // beer, here
+    "EH_N", "IH_N", // hen, pin
+    "IY_M", "IY_N", // team, teen
+    "AY_M", "AY_N", // mine, time
+    "AH_L", "AO_L", // halt, cult
+    "AA_L", "AO_L",
+    "AA_L", "AH_L",
+    "AA", "AO", // draw, raw
+    "AA_N", "AO_N", // shawn, con
+    "----", "----"
+    ];
+
 // These consontants are merged with their preceding vowels, because they modify
 // the sound of those vowels. Ex: the 'o' in 'sole' is different from 'son'
 static private var SYLLABIC_CONSONANTS = [ "L", "M", "N", "NG", "R" ];
@@ -269,7 +285,10 @@ function NucleiiMatch(a:Syllable, b:Syllable)
     if( a.nucleus == b.nucleus )
         return true;
 
-    // hack for AH-S and IH-S, like friendliness/emptiness, abortionist/perfectionist
+    // super-specific hack for AH-S and IH-S
+    // like friendliness/emptiness, abortionist/perfectionist
+    // 'S' is not usually a syllabic consonant, but it tends to make
+    // AH and IH sound very similar in many cases.
     if( a.coda.Length > 0
             && b.coda.Length > 0
             && a.coda[0] == 'S'
@@ -280,17 +299,15 @@ function NucleiiMatch(a:Syllable, b:Syllable)
     }
     // TODO consider just always matching AH and IH... opposites vs. exists
 
-    // hack for OW N and OW M, such as wishBONE vs. synDROME
-    if( IsSamePair( a.nucleus, b.nucleus, 'OW_N', 'OW_M' ) )
-        return true;
-
-    // "beer" "here". IY_R is pretty uncommon relative to IH_R
-    if( IsSamePair( a.nucleus, b.nucleus, 'IY_R', 'IH_R' ) )
-        return true;
-
-    // "hen" "been"
-    if( IsSamePair( a.nucleus, b.nucleus, 'EH_N', 'AH_N' ) )
-        return true;
+    // go through list of exceptions
+    for( var i = 0; i < NONEXACT_EQUIVALENT_NUCLEII.length; i += 2 )
+    {
+        if( IsSamePair(
+                    a.nucleus, b.nucleus,
+                    NONEXACT_EQUIVALENT_NUCLEII[i],
+                    NONEXACT_EQUIVALENT_NUCLEII[i+1] ))
+            return true;
+    }
 
     return false;
 }
@@ -312,6 +329,7 @@ function ScorePronuns( aSyls:List.<Syllable>, bSyls:List.<Syllable> )
             var hackForMUsed = false;
 
             // slight hack here - if the syl-con is an M, give 0.5 to kind of count it as a matching coda..
+            // because M functions as a coda and a syllabic consonant
             if( a.nucleus.length > 2 && GetLast(a.nucleus) == 'M' )
             {
                 hackForMUsed = true;
@@ -625,6 +643,14 @@ function RunTestCases()
     TestScoreStrings('hardware', 'car share', 2.0);
     TestScoreStrings('wishbone', 'fish phone', 2.0);
     TestScoreStrings('bone', 'phone', 1.0);
+    TestScoreStrings('team', 'teen', 1.5);
+    TestScoreStrings('halt', 'cult', 1.5);
+    TestScoreStrings('hen', 'pin', 1.0);
+    TestScoreStrings('mine', 'time', 1.0);
+    TestScoreStrings('private', 'pirate', 1.5);
+    TestScoreStrings('draw', 'raw', 1.0);
+    TestScoreStrings('fun', 'when', 0.0);
+    TestScoreStrings('shawn', 'con', 1.0);
     Utils.Assert( AllNucleiiCoverExists('refinance', 'finance') );
 
     Debug.Log('-- Tests done --');
@@ -640,6 +666,9 @@ function GetRandomPromptWord(difficulty:int)
 function IsValidAnswer(phrase:String)
 {
     var words = phrase.Split(' '[0]);
+
+    if( words.length == 0 )
+        return false;
 
     for( var word in words )
         if( !validAnswerWords.Contains(word) )

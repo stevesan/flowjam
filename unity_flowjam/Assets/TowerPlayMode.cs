@@ -22,6 +22,7 @@ public class TowerPlayMode : MonoBehaviour
     public bool timedAdd = false;
     public bool addPerTurn = true;
     public bool addExtraLetters = false;
+    public bool debugShowAnalysis = false;
 
     public float rowPeriod = 5f;
 
@@ -95,7 +96,7 @@ public class TowerPlayMode : MonoBehaviour
             for( int i = 0; i < words.Count; i++ )
             {
                 string word = words[i];
-                if( RhymeScorer.main.ScoreStrings( playerInput, word ) >= 1.0f )
+                if( RhymeScorer.main.ScoreStrings( playerInput, word ) > 0.0f )
                 {
                     words[i] = RhymeScorer.main.GetRandomPromptWord(wordLevel);
                     gotSome = true;
@@ -344,4 +345,15 @@ public class TowerPlayMode : MonoBehaviour
                 Reset();
         }
 	}
+
+    void OnGUI()
+    {
+        if( debugShowAnalysis )
+        {
+            GUILayout.BeginArea( new Rect(0, 0, Screen.width/4, Screen.height) );
+            RhymeTester.PhraseAnalysisGUI(words[0]);
+            RhymeTester.PhraseAnalysisGUI(playerInput);
+            GUILayout.EndArea();
+        }
+    }
 }
