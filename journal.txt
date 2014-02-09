@@ -1,5 +1,6 @@
 TASK LIST:
 
+tang / pain
 - tutorial!
 
 - alliteration bonus!
@@ -415,3 +416,4 @@ CAN - clumps of words. "oh, I can think of a lot of words that rhyme with 'potio
     PvP mode? see who gets the most number of points for a single word in 1 minute?
     PvP - each person picks 10 words, other person tries to get as many points for any of those words
 
+- added "remove all letter instances". like this much better! makes you think about words that use the most frequent letters on the tower.

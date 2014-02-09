@@ -15,6 +15,7 @@ public class TowerPlayMode : MonoBehaviour
     public GUIText countdown;
     public TowerDisplay tower;
     public AudioClip letterDestroySound;
+    public AudioClip extraLetterSound;
     public AudioClip riseSound;
     public AudioClip gameOverSound;
 
@@ -22,7 +23,9 @@ public class TowerPlayMode : MonoBehaviour
     public bool timedAdd = false;
     public bool addPerTurn = true;
     public bool addExtraLetters = false;
+    public bool removeAllLetterInstances = false;
     public bool debugShowAnalysis = false;
+    public bool addToLowest = true;
 
     public float rowPeriod = 5f;
 
@@ -134,7 +137,7 @@ public class TowerPlayMode : MonoBehaviour
                         score++;
 
                         AudioSource.PlayClipAtPoint( letterDestroySound, transform.position );
-                        yield return new WaitForSeconds(0.4f);
+                        yield return new WaitForSeconds(0.2f);
                     }
                 }
 
@@ -170,18 +173,19 @@ public class TowerPlayMode : MonoBehaviour
 
             if( addExtraLetters )
             {
-                int col = 0;
                 foreach( char c in extraLetters )
                 {
-                    AudioSource.PlayClipAtPoint( letterDestroySound, transform.position );
+                    int col = addToLowest ? tower.GetLowestColumn() : tower.GetHighestColumn();
                     tower.PushBlock( col, c );
-                    col = (col+1) % tower.width;
-                    yield return new WaitForSeconds(0.4f);
+                    AudioSource.PlayClipAtPoint( extraLetterSound, transform.position );
+                    yield return new WaitForSeconds(0.2f);
                 }
             }
 
             if( addPerTurn )
+            {
                 tower.PushRow();
+            }
 
             if( tower.TopRowOccupied() )
             {
@@ -190,7 +194,8 @@ public class TowerPlayMode : MonoBehaviour
             }
             else
             {
-                AudioSource.PlayClipAtPoint( riseSound, transform.position );
+                if( addPerTurn )
+                    AudioSource.PlayClipAtPoint( riseSound, transform.position );
                 state = "playing";
             }
         }
@@ -234,12 +239,16 @@ public class TowerPlayMode : MonoBehaviour
 
         bool anyAttackable = false;
 
-        if( usedWords.Contains(playerInput) )
+        if( playerInput == "" )
+            feedbackDisplay.text = "Type:";
+        else if( usedWords.Contains(playerInput) )
             feedbackDisplay.text = "Already used!";
         else if( playerInput.Length > 1 && !RhymeScorer.main.IsValidAnswer(playerInput) )
             feedbackDisplay.text = "Not a word!";
         else
         {
+            // Entered a valid word..
+
             // highlight vulnerable words
             bool anyTooSimilar = false;
             if( RhymeScorer.main.IsValidAnswer( playerInput ) )
@@ -278,6 +287,10 @@ public class TowerPlayMode : MonoBehaviour
 
         if( state == "playing" )
         {
+            // debug
+            if( Application.isEditor && Input.GetKeyDown(KeyCode.Equals) )
+                debugShowAnalysis = !debugShowAnalysis;
+
             HandleInput();
 
             //----------------------------------------
@@ -299,13 +312,26 @@ public class TowerPlayMode : MonoBehaviour
                 //  Highlight letters in tower that are vulnerable
                 //----------------------------------------
                 tower.ClearHighlights();
+
                 foreach( char c in playerInput )
                 {
-                    int x = tower.GetHighestColumnContaining(c);
-                    if( x != -1 )
+                    if( removeAllLetterInstances )
                     {
-                        int y = tower.FindUnmarkedInColumn( x, c );
-                        tower.Mark( x, y, true );
+                        for( int x = 0; x < tower.width; x++ )
+                        for( int y = 0; y < tower.height; y++ )
+                        {
+                            if( tower.GetLower(x,y) == System.Char.ToLower(c) )
+                                tower.Mark(x,y, true);
+                        }
+                    }
+                    else
+                    {
+                        int x = tower.GetHighestColumnContaining(c);
+                        if( x != -1 )
+                        {
+                            int y = tower.FindUnmarkedInColumn( x, c );
+                            tower.Mark( x, y, true );
+                        }
                     }
                 }
             }
@@ -324,6 +350,8 @@ public class TowerPlayMode : MonoBehaviour
                         AudioSource.PlayClipAtPoint( gameOverSound, transform.position );
                         state = "gameover";
                     }
+                    else
+                        AudioSource.PlayClipAtPoint( riseSound, transform.position );
                     rowCountdown = rowPeriod;
                 }
                 countdown.text = ""+Mathf.CeilToInt(rowCountdown);
@@ -350,7 +378,7 @@ public class TowerPlayMode : MonoBehaviour
     {
         if( debugShowAnalysis )
         {
-            GUILayout.BeginArea( new Rect(0, 0, Screen.width/4, Screen.height) );
+            GUILayout.BeginArea( new Rect(Screen.width*0.75f, 0, Screen.width*0.25f, Screen.height) );
             RhymeTester.PhraseAnalysisGUI(words[0]);
             RhymeTester.PhraseAnalysisGUI(playerInput);
             GUILayout.EndArea();

@@ -36,7 +36,9 @@ public class TowerDisplay : MonoBehaviour
         {
             display.text = ""+System.Char.ToUpper(c);
             if( toprow )
-                display.color = Color.red;
+            {
+                display.text = "";
+            }
             else 
             { 
                 if( marked )
@@ -181,6 +183,19 @@ public class TowerDisplay : MonoBehaviour
     public bool ColumnContainsUnmarked( int x, char c )
     {
         return FindUnmarkedInColumn( x, c ) != -1;
+    }
+
+    public int GetLowestColumn()
+    {
+        int minX = -1;
+        for( int x = 0; x < width; x++ )
+        {
+            if( minX == -1
+                    || GetColumnSize(x) < GetColumnSize(minX) )
+                minX = x;
+        }
+
+        return minX;
     }
 
     public int GetHighestColumn()

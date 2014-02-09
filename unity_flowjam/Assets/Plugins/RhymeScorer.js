@@ -64,12 +64,14 @@ static private var NONEXACT_EQUIVALENT_NUCLEII = [
     "IY_R", "IH_R", // beer, here
     "EH_N", "IH_N", // hen, pin
     "IY_M", "IY_N", // team, teen
+    "IH_M", "IH_N", // tim, fin
     "AY_M", "AY_N", // mine, time
     "AH_L", "AO_L", // halt, cult
     "AA_L", "AO_L",
     "AA_L", "AH_L",
     "AA", "AO", // draw, raw
     "AA_N", "AO_N", // shawn, con
+    "AE_NG", "EH_NG", // length, rang
     "----", "----"
     ];
 
@@ -651,6 +653,7 @@ function RunTestCases()
     TestScoreStrings('draw', 'raw', 1.0);
     TestScoreStrings('fun', 'when', 0.0);
     TestScoreStrings('shawn', 'con', 1.0);
+    TestScoreStrings('length', 'rang', 1.0);
     Utils.Assert( AllNucleiiCoverExists('refinance', 'finance') );
 
     Debug.Log('-- Tests done --');

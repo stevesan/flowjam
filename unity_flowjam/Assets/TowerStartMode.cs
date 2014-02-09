@@ -35,14 +35,14 @@ public class TowerStartMode : MonoBehaviour
         }
         else if( state == "difficulty" )
         {
-            menuText.text = "Press # to choose difficulty\n1. Normal\n2. Timed\n3. Hard\n4. Hard Timed\n5. Own Worst Enemy";
+            menuText.text = "Press # to choose difficulty\n1. Normal\n2. Timed\n3. Hard\n4. Hard Timed";
 
             if( Input.GetKeyDown("1") )
             {
                 playMode.difficulty = 0;
                 playMode.timedAdd = false;
                 playMode.addPerTurn = true;
-                playMode.addExtraLetters = false;
+                playMode.addExtraLetters = true;
                 ToPlayMode();
             }
             else if( Input.GetKeyDown("2") )
@@ -50,7 +50,7 @@ public class TowerStartMode : MonoBehaviour
                 playMode.difficulty = 0;
                 playMode.timedAdd = true;
                 playMode.addPerTurn = false;
-                playMode.addExtraLetters = false;
+                playMode.addExtraLetters = true;
                 ToPlayMode();
             }
             else if( Input.GetKeyDown("3") )
@@ -58,7 +58,7 @@ public class TowerStartMode : MonoBehaviour
                 playMode.difficulty = 1;
                 playMode.timedAdd = false;
                 playMode.addPerTurn = true;
-                playMode.addExtraLetters = false;
+                playMode.addExtraLetters = true;
                 ToPlayMode();
             }
             else if( Input.GetKeyDown("4") )
@@ -66,14 +66,6 @@ public class TowerStartMode : MonoBehaviour
                 playMode.difficulty = 1;
                 playMode.timedAdd = true;
                 playMode.addPerTurn = false;
-                playMode.addExtraLetters = false;
-                ToPlayMode();
-            }
-            else if( Input.GetKeyDown("5") )
-            {
-                playMode.difficulty = 0;
-                playMode.timedAdd = false;
-                playMode.addPerTurn = true;
                 playMode.addExtraLetters = true;
                 ToPlayMode();
             }
